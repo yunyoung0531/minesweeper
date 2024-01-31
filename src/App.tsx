@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
 
-type Cell = 'empty' | 'mine';
+// 셀의 상태를 나타내는 타입
+type Cell = 'empty' | 'mine' | number;
 type Board = Cell[][];
 
 function App() {
@@ -12,7 +13,7 @@ function App() {
   const [board, setBoard] = useState<Board>(initializeBoard());
 
   function initializeBoard(): Board {
-    return Array.from({ length: boardSize }, () => 
+    return Array.from({ length: boardSize }, () =>
       Array.from({ length: boardSize }, () => 'empty' as Cell)
     );
   }
@@ -31,8 +32,33 @@ function App() {
     return board;
   }
 
+  function calculateMines(board: Board): Board {
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1], [1, 0], [1, 1]
+    ];
+
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        if (board[row][col] === 'mine') continue;
+
+        let mineCount = 0;
+        for (let [dx, dy] of directions) {
+          const newRow = row + dx, newCol = col + dy;
+          if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize && board[newRow][newCol] === 'mine') {
+            mineCount++;
+          }
+        }
+        board[row][col] = mineCount;
+      }
+    }
+    return board;
+  }
+
   useEffect(() => {
-    setBoard(placeMines(initializeBoard()));
+    const newBoard = placeMines(initializeBoard());
+    setBoard(calculateMines(newBoard));
   }, []);
 
   return (
@@ -42,7 +68,8 @@ function App() {
           <div key={rowIndex} className="board-row">
             {row.map((cell, cellIndex) => (
               <div key={cellIndex} className="cell">
-                {cell === 'mine' ? <img src={mineImage} alt="Mine" /> : ''}
+              {typeof cell === 'number' && cell > 0 ? cell :
+                cell === 'mine' ? <img src={mineImage} alt="Mine" /> : ''}
               </div>
             ))}
           </div>
