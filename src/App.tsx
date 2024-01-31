@@ -25,6 +25,8 @@ function App() {
   // 지뢰의 갯수를 표시할 상태를 추가합니다.
   const [remainingMines, setRemainingMines] = useState(mineCount);
   const [timer, setTimer] = useState(0);
+  // 게임 종료 상태를 추가합니다.
+  const [gameOver, setGameOver] = useState(false);
 
 
   function initializeBoard(): Board {
@@ -83,8 +85,24 @@ function App() {
     return board;
   }
 
+  function revealMines() {
+    // 모든 지뢰의 위치를 보여주는 함수
+    // 지뢰가 있는 모든 셀을 열린 상태로 설정
+    const newOpenedCells = board.map((row, rowIndex) =>
+      row.map((cell, cellIndex) => cell === 'mine' || openedCells[rowIndex][cellIndex])
+    );
+    setOpenedCells(newOpenedCells);
+    setGameOver(true); // 게임 종료 상태를 true로 설정
+  }
+
   function openCell(row: number, col: number) {
-    if (openedCells[row][col] || board[row][col] === 'mine') return;
+    if (openedCells[row][col] || flaggedCells[row][col] || gameOver) return;
+
+        // 만약 지뢰를 클릭했다면, 모든 지뢰를 보여주고 게임을 종료합니다.
+        if (board[row][col] === 'mine') {
+          revealMines();
+          return;
+        }
   
     const newOpenedCells = openedCells.map(row => [...row]);
     const queue = [[row, col]];
@@ -177,7 +195,13 @@ function App() {
           {String(remainingMines).padStart(3, '0')}
         </div>
         {/* <button className="reset-button"> */}
-          <img className="reset-button" src='https://freeminesweeper.org/images/facesmile.gif'/>
+        <img 
+          className="reset-button" 
+          src={gameOver ? 'https://freeminesweeper.org/images/facedead.gif' : 'https://freeminesweeper.org/images/facesmile.gif'} 
+          alt="Reset Game"
+          // onClick={}
+          /* 여기에 게임을 리셋하는 함수를 연결 하기*/
+        />
         {/* </button> */}
         <div className="timer">
           {String(timer).padStart(3, '0')}
