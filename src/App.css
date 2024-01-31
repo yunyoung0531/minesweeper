@@ -1,19 +1,32 @@
-/* 전체 앱을 화면 가운데에 정렬 */
 .app-container {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
   height: 100vh; /* 전체 뷰포트 높이 */
-  background-color: #000;
+  background-color: #000000;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  margin-bottom: 5px;
+  background-color: #BBB;
+  border: 3px solid #FFFFFF;
+  border-bottom-color: #7B7B7B;
+  border-right-color: #7B7B7B;
 }
 
 .game-board {
   display: flex;
   flex-direction: column;
-  background-color: rgb(190, 190, 190);
-  /* padding: 20px; */
-  /* border-radius: 10px;  */
-  /* box-shadow: 0px 0px 10px 3px rgba(255, 255, 255, 0.6);  */
+  background-color: #BBB;
+  border: 3px solid #7B7B7B;
+  border-top-color: #FFFFFF;
+  border-left-color: #FFFFFF;
 }
 
 .board-row {
@@ -21,18 +34,50 @@
 }
 
 .cell {
-  width: 16px;
-  height: 16px;
-  border: 1px solid rgb(65, 65, 65);
+  width: 20px;
+  height: 20px;
+  background-color: #BDBDBD;
+  border: 1px solid #7B7B7B;
+  border-top-color: #FFFFFF;
+  border-left-color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.mine-count {
-  color: white;
+.cell.opened {
+  background-color: #b9b9b9;
+  border-color: #7B7B7B;
 }
 
+.mine-count,
 .timer {
-  color: white;
+  width: 39px; /* 디지털 숫자 3개를 표현하기에 충분한 너비 */
+  color: red;
+  background-color: black;
+  font-family: 'Digital-7 Mono', monospace;
+  text-align: center;
+  font-size: 1.5em;
+  border: 1px solid #7B7B7B;
+  padding: 2px;
+}
+
+.reset-button {
+  border: none;
+  cursor: pointer;
+  font-size: 1.5em;
+  width: 35px;
+  height: 35px;
+}
+
+/* 스마일리 버튼에 대한 스타일링 */
+.reset-button:hover {
+  filter: brightness(1.1);
+}
+
+/* 깃발과 지뢰 이미지에 대한 스타일링 */
+.flagged img,
+.cell img {
+  width: 100%;
+  height: auto;
 }

@@ -24,6 +24,8 @@ function App() {
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null); //스페이스바 위함
   // 지뢰의 갯수를 표시할 상태를 추가합니다.
   const [remainingMines, setRemainingMines] = useState(mineCount);
+  const [timer, setTimer] = useState(0);
+
 
   function initializeBoard(): Board {
     return Array.from({ length: boardSize }, () =>
@@ -167,9 +169,20 @@ function App() {
       onKeyDown={handleKeyDown} 
       tabIndex={0} // 여기에 tabIndex를 추가하여 키보드 이벤트를 받을 수 있도록
     >
-      <div className="mine-count">
+      {/* <div className="mine-count">
         Remaining Mines: {remainingMines}
-      </div>
+      </div> */}
+      <header className="game-header">
+        <div className="mine-count">
+          {String(remainingMines).padStart(3, '0')}
+        </div>
+        {/* <button className="reset-button"> */}
+          <img className="reset-button" src='https://freeminesweeper.org/images/facesmile.gif'/>
+        {/* </button> */}
+        <div className="timer">
+          {String(timer).padStart(3, '0')}
+        </div>
+      </header>
       <div className="game-board">
         {board.map((row, rowIndex) => (
           <div key={rowIndex} className="board-row">
@@ -185,7 +198,7 @@ function App() {
               >
                 {/* 깃발 표시 로직 */}
                 {flaggedCells[rowIndex][cellIndex] && !openedCells[rowIndex][cellIndex]
-                  ? <img src={flagImage} alt="Flag" />
+                  ? <img src={flagImage} alt="Flag" style={{ width: '20px', height: '20px' }} />
                   : openedCells[rowIndex][cellIndex]
                     ? (cell === 'mine'
                       ? <img src={mineImage} alt="Mine" />
