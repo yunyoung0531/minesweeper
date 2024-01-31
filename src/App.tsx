@@ -22,6 +22,8 @@ function App() {
   const [flaggedCells, setFlaggedCells] = useState<FlaggedCells>(initializeFlaggedCells());
   // 현재 선택된 셀의 위치를 추적하는 상태를 추가.
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null); //스페이스바 위함
+  // 지뢰의 갯수를 표시할 상태를 추가합니다.
+  const [remainingMines, setRemainingMines] = useState(mineCount);
 
   function initializeBoard(): Board {
     return Array.from({ length: boardSize }, () =>
@@ -143,7 +145,11 @@ function App() {
     const newFlaggedCells = flaggedCells.map(row => [...row]);
     newFlaggedCells[row][col] = !newFlaggedCells[row][col];
     setFlaggedCells(newFlaggedCells);
+
+    // 깃발이 추가되거나 제거될 때 지뢰의 갯수를 업데이트
+    setRemainingMines(prev => newFlaggedCells[row][col] ? prev - 1 : prev + 1);
   }
+
 
   function handleContextMenu(event: React.MouseEvent, row: number, col: number) {
     event.preventDefault();
@@ -161,6 +167,9 @@ function App() {
       onKeyDown={handleKeyDown} 
       tabIndex={0} // 여기에 tabIndex를 추가하여 키보드 이벤트를 받을 수 있도록
     >
+      <div className="mine-count">
+        Remaining Mines: {remainingMines}
+      </div>
       <div className="game-board">
         {board.map((row, rowIndex) => (
           <div key={rowIndex} className="board-row">
