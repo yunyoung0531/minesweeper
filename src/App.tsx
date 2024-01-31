@@ -5,6 +5,7 @@ import './App.css';
 type Cell = 'empty' | 'mine' | number;
 type Board = Cell[][];
 type OpenedCells = boolean[][];
+type ZeroCells = Array<[number, number]>;
 
 function App() {
   const boardSize = 8;
@@ -14,6 +15,8 @@ function App() {
 
   const [board, setBoard] = useState<Board>(initializeBoard());
   const [openedCells, setOpenedCells] = useState<OpenedCells>(initializeOpenedCells());
+  // 0 값을 갖는 셀의 위치를 저장하는 상태를 추가합니다.
+  const [zeroCells, setZeroCells] = useState<ZeroCells>([]);
 
   function initializeBoard(): Board {
     return Array.from({ length: boardSize }, () =>
@@ -40,6 +43,8 @@ function App() {
   }
 
   function calculateMines(board: Board): Board {
+    let tempZeroCells: ZeroCells = []; // 0 값을 갖는 셀의 위치를 임시 저장할 배열
+
     const directions = [
       [-1, -1], [-1, 0], [-1, 1],
       [0, -1],           [0, 1],
@@ -58,8 +63,14 @@ function App() {
           }
         }
         board[row][col] = mineCount;
+
+        // 셀의 값이 0이면 해당 위치를 tempZeroCells에 추가합니다.
+        if (board[row][col] === 0) {
+          tempZeroCells.push([row, col]);
+        }
       }
     }
+    setZeroCells(tempZeroCells); // 상태 업데이트
     return board;
   }
 
@@ -70,7 +81,6 @@ function App() {
     const queue = [[row, col]];
   
     while (queue.length > 0) {
-      // const [currentRow, currentCol] = queue.shift();
       const current = queue.shift();
       if (!current) continue;
 
