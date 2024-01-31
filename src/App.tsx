@@ -1,18 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
-// 셀의 상태를 나타내는 타입 정의
 type Cell = 'empty' | 'mine';
-
-// 게임 보드 타입 정의
 type Board = Cell[][];
 
 function App() {
-  // 8x8 게임 보드 생성
   const boardSize = 8;
-  const board: Board = Array.from({ length: boardSize }, () => 
-    Array.from({ length: boardSize }, () => 'empty' as Cell)
-  );
+  const mineCount = 10;
+  const mineImage = 'https://freeminesweeper.org/images/bombrevealed.gif';
+
+  const [board, setBoard] = useState<Board>(initializeBoard());
+
+  function initializeBoard(): Board {
+    return Array.from({ length: boardSize }, () => 
+      Array.from({ length: boardSize }, () => 'empty' as Cell)
+    );
+  }
+
+  function placeMines(board: Board): Board {
+    let placedMines = 0;
+    while (placedMines < mineCount) {
+      const row = Math.floor(Math.random() * boardSize);
+      const col = Math.floor(Math.random() * boardSize);
+
+      if (board[row][col] === 'empty') {
+        board[row][col] = 'mine';
+        placedMines++;
+      }
+    }
+    return board;
+  }
+
+  useEffect(() => {
+    setBoard(placeMines(initializeBoard()));
+  }, []);
 
   return (
     <div className="app-container">
@@ -21,7 +42,7 @@ function App() {
           <div key={rowIndex} className="board-row">
             {row.map((cell, cellIndex) => (
               <div key={cellIndex} className="cell">
-                {/* 여기에 각 셀의 내용을 표시할 수 있습니다 */}
+                {cell === 'mine' ? <img src={mineImage} alt="Mine" /> : ''}
               </div>
             ))}
           </div>
