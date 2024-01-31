@@ -64,27 +64,37 @@ function App() {
   }
 
   function openCell(row: number, col: number) {
-    const updatedOpenedCells = [...openedCells];
-    if (updatedOpenedCells[row][col]) return; // 이미 열린 셀은 처리하지 않음
-
-    updatedOpenedCells[row][col] = true;
-    setOpenedCells(updatedOpenedCells);
-
+    // 클릭한 셀이 이미 열려있거나 지뢰가 있는 셀이라면 아무 동작도 수행하지 않는다.
+    if (openedCells[row][col] || board[row][col] === 'mine') return;
+  
+    // 새로운 상태를 만들기 위해 상태의 불변성을 유지하면서 복사본을 생성한다.
+    const newOpenedCells = openedCells.map(row => [...row]);
+    newOpenedCells[row][col] = true;
+  
+    // 만약 클릭한 셀의 값이 0이면 주변 셀도 연다.
     if (board[row][col] === 0) {
       const directions = [
         [-1, -1], [-1, 0], [-1, 1],
         [0, -1],           [0, 1],
         [1, -1], [1, 0], [1, 1]
       ];
-      for (let [dx, dy] of directions) {
-        const newRow = row + dx, newCol = col + dy;
-        if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize && !updatedOpenedCells[newRow][newCol]) {
-          openCell(newRow, newCol);
+  
+      directions.forEach(([dx, dy]) => {
+        const newRow = row + dx;
+        const newCol = col + dy;
+        if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
+          // 주변 셀이 닫혀있고, 지뢰가 아니며, 값이 0인 경우에만 열기
+          if (!newOpenedCells[newRow][newCol] && board[newRow][newCol] === 0) {
+            openCell(newRow, newCol);
+          }
         }
-      }
+      });
     }
+  
+    // 상태 업데이트
+    setOpenedCells(newOpenedCells);
   }
-
+  
   useEffect(() => {
     const newBoard = placeMines(initializeBoard());
     setBoard(calculateMines(newBoard));
@@ -102,14 +112,13 @@ function App() {
                 onClick={() => openCell(rowIndex, cellIndex)}
                 style={{ cursor: 'pointer' }} // Optional: Adds a pointer cursor on hover
               >
-                {/* Show blank image for unopened cells, and the cell content for opened cells */}
                 {openedCells[rowIndex][cellIndex]
-                  ? (cell === 'mine'
-                    ? <img src={mineImage} alt="Mine" />
-                    : cell > 0
-                      ? cell
-                      : '')
-                  : <img src={blankCellImage} alt="Blank" />}
+                ? (cell === 'mine'
+                  ? <img src={mineImage} alt="Mine" />
+                  : typeof cell === 'number' && cell > 0
+                    ? cell
+                    : '')
+                : <img src={blankCellImage} alt="Blank" />}
               </div>
             ))}
           </div>
