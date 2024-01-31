@@ -176,6 +176,25 @@ function App() {
     toggleFlag(row, col);
   }
 
+  function resetGame() {
+    // 새 게임을 위한 보드 초기화
+    const newBoard = initializeBoard();
+    const newMinesPlacedBoard = placeMines(newBoard);
+    const newCalculatedBoard = calculateMines(newMinesPlacedBoard);
+
+    // 지뢰판을 새로 계산한 보드로 설정
+    setBoard(newCalculatedBoard);
+
+    // 나머지 상태들을 초기화
+    setOpenedCells(initializeOpenedCells());
+    setFlaggedCells(initializeFlaggedCells());
+    setZeroCells([]);
+    setGameOver(false);
+    setRemainingMines(mineCount);
+    // setTimer(0);
+
+  }
+
   useEffect(() => {
     const newBoard = placeMines(initializeBoard());
     setBoard(calculateMines(newBoard));
@@ -199,7 +218,7 @@ function App() {
           className="reset-button" 
           src={gameOver ? 'https://freeminesweeper.org/images/facedead.gif' : 'https://freeminesweeper.org/images/facesmile.gif'} 
           alt="Reset Game"
-          // onClick={}
+          onClick={resetGame}
           /* 여기에 게임을 리셋하는 함수를 연결 하기*/
         />
         {/* </button> */}
