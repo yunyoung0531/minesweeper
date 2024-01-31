@@ -64,36 +64,47 @@ function App() {
   }
 
   function openCell(row: number, col: number) {
-    // 클릭한 셀이 이미 열려있거나 지뢰가 있는 셀이라면 아무 동작도 수행하지 않는다.
     if (openedCells[row][col] || board[row][col] === 'mine') return;
   
-    // 새로운 상태를 만들기 위해 상태의 불변성을 유지하면서 복사본을 생성한다.
     const newOpenedCells = openedCells.map(row => [...row]);
-    newOpenedCells[row][col] = true;
+    const queue = [[row, col]];
   
-    // 만약 클릭한 셀의 값이 0이면 주변 셀도 연다.
-    if (board[row][col] === 0) {
-      const directions = [
-        [-1, -1], [-1, 0], [-1, 1],
-        [0, -1],           [0, 1],
-        [1, -1], [1, 0], [1, 1]
-      ];
+    while (queue.length > 0) {
+      // const [currentRow, currentCol] = queue.shift();
+      const current = queue.shift();
+      if (!current) continue;
+
+      const [currentRow, currentCol] = current;
   
-      directions.forEach(([dx, dy]) => {
-        const newRow = row + dx;
-        const newCol = col + dy;
-        if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
-          // 주변 셀이 닫혀있고, 지뢰가 아니며, 값이 0인 경우에만 열기
-          if (!newOpenedCells[newRow][newCol] && board[newRow][newCol] === 0) {
-            openCell(newRow, newCol);
-          }
+      if (!newOpenedCells[currentRow][currentCol]) {
+        newOpenedCells[currentRow][currentCol] = true;
+  
+        if (board[currentRow][currentCol] === 0) {
+          const directions = [
+            [-1, -1], [-1, 0], [-1, 1],
+            [0, -1],           [0, 1],
+            [1, -1], [1, 0], [1, 1]
+          ];
+  
+          directions.forEach(([dx, dy]) => {
+            const newRow = currentRow + dx;
+            const newCol = currentCol + dy;
+            if (
+              newRow >= 0 && newRow < boardSize && 
+              newCol >= 0 && newCol < boardSize &&
+              !newOpenedCells[newRow][newCol] && 
+              board[newRow][newCol] === 0
+            ) {
+              queue.push([newRow, newCol]);
+            }
+          });
         }
-      });
+      }
     }
   
-    // 상태 업데이트
     setOpenedCells(newOpenedCells);
   }
+  
   
   useEffect(() => {
     const newBoard = placeMines(initializeBoard());
