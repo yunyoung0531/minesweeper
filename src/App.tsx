@@ -30,6 +30,11 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameWon, setGameWon] = useState(false); // 게임 이겼는지
 
+  const resetButtonImage = gameWon
+  ? 'https://freeminesweeper.org/images/facewin.gif'
+  : gameOver
+  ? 'https://freeminesweeper.org/images/facedead.gif'
+  : 'https://freeminesweeper.org/images/facesmile.gif';
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined;
   
@@ -239,6 +244,7 @@ function App() {
     setRemainingMines(mineCount);
     setGameStarted(false);
     setTimer(0);
+    setGameWon(false);
   }
 
   useEffect(() => {
@@ -262,7 +268,7 @@ function App() {
         {/* <button className="reset-button"> */}
         <img 
           className="reset-button" 
-          src={gameOver ? 'https://freeminesweeper.org/images/facedead.gif' : 'https://freeminesweeper.org/images/facesmile.gif'} 
+          src={resetButtonImage} 
           alt="Reset Game"
           onClick={resetGame}
           /* 여기에 게임을 리셋하는 함수를 연결 하기*/
