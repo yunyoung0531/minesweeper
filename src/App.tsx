@@ -71,13 +71,14 @@ function App() {
       Array.from({ length: boardSize }, () => false)
     );
   }
-  function placeMines(board: Board): Board {
+  function placeMines(board: Board, firstClickRow: number, firstClickCol: number): Board {
     let placedMines = 0;
     while (placedMines < mineCount) {
       const row = Math.floor(Math.random() * boardSize);
       const col = Math.floor(Math.random() * boardSize);
 
-      if (board[row][col] === 'empty') {
+      // 첫 번째 클릭한 셀과 그 주변 셀에는 지뢰를 배치x
+      if (board[row][col] === 'empty' && !isFirstClickAdjacent(row, col, firstClickRow, firstClickCol)) {
         board[row][col] = 'mine';
         placedMines++;
       }
@@ -85,6 +86,10 @@ function App() {
     return board;
   }
 
+  //첫번째 클릭한 셀 주변인지 확인
+  function isFirstClickAdjacent(row: number, col: number, firstClickRow: number, firstClickCol: number): boolean {
+    return Math.abs(row - firstClickRow) <= 1 && Math.abs(col - firstClickCol) <= 1;
+  }
   function calculateMines(board: Board): Board {
     let tempZeroCells: ZeroCells = []; // 0 값을 갖는 셀의 위치를 임시 저장할 배열
 
@@ -141,6 +146,11 @@ function App() {
   function openCell(row: number, col: number) {
     if (!gameStarted) {
       setGameStarted(true);
+      // 여기서 첫 클릭된 셀을 기준으로 지뢰를 배치합니다.
+      const newBoardWithMines = placeMines(board, row, col); // 첫 클릭 위치를 인자로 지뢰 배치
+      const calculatedBoard = calculateMines(newBoardWithMines);
+      setBoard(calculatedBoard);
+      // 첫 번째 셀을 열기 전에 지뢰가 배치되도록 로직을 조정
     }
     if (checkWin()) {
       setGameOver(true);
@@ -228,28 +238,24 @@ function App() {
   }
 
   function resetGame() {
-    // 새 게임을 위한 보드 초기화
     const newBoard = initializeBoard();
-    const newMinesPlacedBoard = placeMines(newBoard);
-    const newCalculatedBoard = calculateMines(newMinesPlacedBoard);
 
-    // 지뢰판을 새로 계산한 보드로 설정
-    setBoard(newCalculatedBoard);
-
-    // 나머지 상태들을 초기화
-    setOpenedCells(initializeOpenedCells());
-    setFlaggedCells(initializeFlaggedCells());
-    setZeroCells([]);
-    setGameOver(false);
-    setRemainingMines(mineCount);
-    setGameStarted(false);
-    setTimer(0);
-    setGameWon(false);
+  // 보드 상태를 초기화
+  setBoard(newBoard);
+  // 나머지 상태들을 초기화
+  setOpenedCells(initializeOpenedCells());
+  setFlaggedCells(initializeFlaggedCells());
+  setZeroCells([]);
+  setGameOver(false);
+  setRemainingMines(mineCount);
+  setGameStarted(false);
+  setTimer(0);
+  setGameWon(false);
   }
 
   useEffect(() => {
-    const newBoard = placeMines(initializeBoard());
-    setBoard(calculateMines(newBoard));
+    const newBoard = initializeBoard();
+    setBoard(newBoard); 
   }, []);
 
   return (
