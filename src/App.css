@@ -6,23 +6,61 @@
   height: 100vh; /* 전체 뷰포트 높이 */
   background-color: #000000;
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
+  position: relative;
 }
 
 .mini-game {
   background-color: #b3b3b3;
-  padding-left: 13px;
-  padding-right: 13px;
-  padding-bottom: 13px;
-  /* padding-top: 35px; */
+  padding: 13px;
   border-radius: 10px;
   font-size: 13px;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
+  z-index: 10; /* 게임 메뉴보다 낮게 설정하여 게임 메뉴가 위로 올라오게 합니다. */
+  position: relative;
 }
 
 .mini-game-nav {
-  padding-top: 3px;
+  /* padding-top: 3px; */
   padding-bottom: 8px;
+  position: relative;
+  z-index: 10;
 }
+
+.game-menu {
+  background-color: #b3b3b3;
+  border: 1px solid #343434f8;
+  /* border-radius: 5px; */
+  box-shadow: 0 2px 5px rgba(91, 91, 91, 0.2);
+  position: absolute; /* 절대 위치 설정 */
+  top: 13.7%; 
+  left: 6%;
+  width: 115px;
+  z-index: 1000; /* 가장 높은 z-index 값을 설정하여 모든 요소 위에 표시 */
+  display: none;
+  /* padding: -20px !important; */
+}
+.game-menu.active {
+  display: block; /* 활성화 상태에서 보여주기 */
+}
+
+.game-menu ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.game-menu ul li {
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.game-menu ul li:hover {
+  background-color: #ddd;
+}
+
+
+
 
 .mini-game-header a {
   cursor: pointer;

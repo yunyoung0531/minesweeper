@@ -30,6 +30,12 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameWon, setGameWon] = useState(false); // 게임 이겼는지
 
+  const [showMenu, setShowMenu] = useState(false);//네비게이션바- 모달
+  const toggleMenu = () => {
+    setShowMenu(!showMenu);
+  };
+
+
   const resetButtonImage = gameWon
   ? 'https://freeminesweeper.org/images/facewin.gif'
   : gameOver
@@ -266,11 +272,26 @@ function App() {
     >
       <div className='mini-game'>
         <div className='mini-game-nav'>
-          <a>Gameㅤ</a>
+          <a onClick={toggleMenu}>Gameㅤ</a>
           <a>Optionsㅤ</a>
           <a>Help</a>
         </div>
+        
       <header className="game-header">
+      {showMenu && (
+            <div className="game-menu active">
+            {/* // <div className={`game-menu ${showMenu ? 'active' : ''}`}> */}
+              <ul>
+                <li style={{borderBottom: '1px solid #ccc'}}>New</li>
+                <li>Beginner</li>
+                <li>Intermediate</li>
+                <li>Expert</li>
+                <li style={{borderBottom: '1px solid #ccc'}}>Custom</li>
+                <li style={{borderBottom: '1px solid #ccc'}}>Personal Best</li>
+                <li>Exit</li>
+              </ul>
+            </div>
+          )}
         <div className="mine-count">
           {String(remainingMines).padStart(3, '0')}
         </div>
