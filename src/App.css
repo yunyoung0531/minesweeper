@@ -8,6 +8,26 @@
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
 }
 
+.mini-game {
+  background-color: #b3b3b3;
+  padding-left: 13px;
+  padding-right: 13px;
+  padding-bottom: 13px;
+  /* padding-top: 35px; */
+  border-radius: 10px;
+  font-size: 13px;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.mini-game-nav {
+  padding-top: 3px;
+  padding-bottom: 8px;
+}
+
+.mini-game-header a {
+  cursor: pointer;
+}
+
 .game-header {
   display: flex;
   justify-content: space-between;

@@ -264,9 +264,12 @@ function App() {
       onKeyDown={handleKeyDown} 
       tabIndex={0} // 여기에 tabIndex를 추가하여 키보드 이벤트를 받을 수 있도록
     >
-      {/* <div className="mine-count">
-        Remaining Mines: {remainingMines}
-      </div> */}
+      <div className='mini-game'>
+        <div className='mini-game-nav'>
+          <a>Gameㅤ</a>
+          <a>Optionsㅤ</a>
+          <a>Help</a>
+        </div>
       <header className="game-header">
         <div className="mine-count">
           {String(remainingMines).padStart(3, '0')}
@@ -311,6 +314,7 @@ function App() {
             ))}
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
