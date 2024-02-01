@@ -8,22 +8,27 @@ type OpenedCells = boolean[][];
 type ZeroCells = Array<[number, number]>;
 // 깃발 상태를 나타내는 타입 추가
 type FlaggedCells = boolean[][];
+type Level = 'beginner' | 'intermediate' | 'expert';
+
 function App() {
-  const boardSize = 8;
-  const mineCount = 10;
+  // const boardSize = 8;
+  // const mineCount = 10;
+  const defaultMineCount = 10;
+  const initialLevel = 'beginner';
   const mineImage = 'https://freeminesweeper.org/images/bombrevealed.gif';
   const blankCellImage = 'https://freeminesweeper.org/images/blank.gif';
   const flagImage = 'https://freeminesweeper.org/images/bombflagged.gif';
-  const [board, setBoard] = useState<Board>(initializeBoard());
-  const [openedCells, setOpenedCells] = useState<OpenedCells>(initializeOpenedCells());
+  // const [board, setBoard] = useState<Board>(initializeBoard());
+  const [openedCells, setOpenedCells] = useState<OpenedCells>([]); // 초기 상태를 빈 배열로 설정
   // 0 값을 갖는 셀의 위치를 저장하는 상태를 추가
   const [zeroCells, setZeroCells] = useState<ZeroCells>([]);
   // 깃발이 꽂힌 셀의 상태를 추가.
   const [flaggedCells, setFlaggedCells] = useState<FlaggedCells>(initializeFlaggedCells());
   // 현재 선택된 셀의 위치를 추적하는 상태를 추가.
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null); //스페이스바 위함
-  // 지뢰의 갯수를 표시할 상태를 추가합니다.
-  const [remainingMines, setRemainingMines] = useState(mineCount);
+  // 지뢰의 갯수를 표시할 상태를 추가합니다. 
+  // const [remainingMines, setRemainingMines] = useState(mineCount);
+  const [remainingMines, setRemainingMines] = useState(defaultMineCount);
   const [timer, setTimer] = useState(0);
   // 게임 종료 상태를 추가합니다.
   const [gameOver, setGameOver] = useState(false);
@@ -35,6 +40,36 @@ function App() {
     setShowMenu(!showMenu);
   };
 
+  const levels: Record<Level, { size: number; mines: number }> = {
+    beginner: { size: 8, mines: 10 },
+    intermediate: { size: 16, mines: 40 },
+    expert: { size: 32, mines: 100 },
+  };
+  const [level, setLevel] = useState(initialLevel);
+  const [board, setBoard] = useState<Board>([]); // 빈 배열로 초기화
+
+  // const [level, setLevel] = useState<Level>(initialLevel);
+  const [boardSize, setBoardSize] = useState(levels[initialLevel].size);
+  const [mineCount, setMineCount] = useState(levels[initialLevel].mines);
+
+  useEffect(() => {
+    // boardSize와 mineCount가 정의된 후에 보드를 초기화합니다.
+    const initialBoard = initializeBoard(boardSize);
+    setBoard(initialBoard);
+  }, [boardSize]);
+
+    
+
+  useEffect(() => {
+    // 난이도 변경 시 보드 초기화
+    resetGame();
+  }, [level]);
+
+  const changeLevel = (newLevel: Level) => {
+    setLevel(newLevel);
+    setBoardSize(levels[newLevel].size);
+    setMineCount(levels[newLevel].mines);
+  };
 
   const resetButtonImage = gameWon
   ? 'https://freeminesweeper.org/images/facewin.gif'
@@ -67,14 +102,19 @@ function App() {
     }
   }, [openedCells, gameStarted, gameOver])
 
-  function initializeBoard(): Board {
-    return Array.from({ length: boardSize }, () =>
-      Array.from({ length: boardSize }, () => 'empty' as Cell)
+  function initializeBoard(size: number): Board {
+    return Array.from({ length: size }, () =>
+      Array.from({ length: size }, () => 'empty' as Cell)
     );
   }
-  function initializeOpenedCells(): OpenedCells {
-    return Array.from({ length: boardSize }, () =>
-      Array.from({ length: boardSize }, () => false)
+  // function initializeOpenedCells(): OpenedCells {
+  //   return Array.from({ length: boardSize }, () =>
+  //     Array.from({ length: boardSize }, () => false)
+  //   );
+  // }
+  function initializeOpenedCells(size: number): OpenedCells {
+    return Array.from({ length: size }, () =>
+      Array.from({ length: size }, () => false)
     );
   }
   function placeMines(board: Board, firstClickRow: number, firstClickCol: number): Board {
@@ -210,9 +250,9 @@ function App() {
     setOpenedCells(newOpenedCells);
   }
 
-    function initializeFlaggedCells(): FlaggedCells {
-    return Array.from({ length: boardSize }, () =>
-      Array.from({ length: boardSize }, () => false)
+    function initializeFlaggedCells(size: number): FlaggedCells {
+    return Array.from({ length: size }, () =>
+      Array.from({ length: size }, () => false)
     );
   }
   
@@ -244,13 +284,13 @@ function App() {
   }
 
   function resetGame() {
-    const newBoard = initializeBoard();
+    const newBoard = initializeBoard(boardSize);
 
   // 보드 상태를 초기화
   setBoard(newBoard);
   // 나머지 상태들을 초기화
-  setOpenedCells(initializeOpenedCells());
-  setFlaggedCells(initializeFlaggedCells());
+  setOpenedCells(initializeOpenedCells(boardSize)); 
+  setFlaggedCells(initializeFlaggedCells(boardSize));
   setZeroCells([]);
   setGameOver(false);
   setRemainingMines(mineCount);
@@ -260,10 +300,16 @@ function App() {
   }
 
   useEffect(() => {
-    const newBoard = initializeBoard();
-    setBoard(newBoard); 
-  }, []);
+    const initialBoard = initializeBoard(boardSize);
+    setBoard(initialBoard); 
+  }, [boardSize]);
 
+  // boardSize가 설정된 후 openedCells를 초기화하는 useEffect
+  useEffect(() => {
+    setOpenedCells(initializeOpenedCells(boardSize));
+  }, [boardSize]);
+
+  
   return (
     <div 
       className="app-container" 
@@ -283,9 +329,9 @@ function App() {
             {/* // <div className={`game-menu ${showMenu ? 'active' : ''}`}> */}
               <ul>
                 <li style={{borderBottom: '1px solid #ccc'}}>New</li>
-                <li>Beginner</li>
-                <li>Intermediate</li>
-                <li>Expert</li>
+                <li onClick={() => changeLevel('beginner')}>Beginner</li>
+                <li onClick={() => changeLevel('intermediate')}>Intermediate</li>
+                <li onClick={() => changeLevel('expert')}>Expert</li>
                 <li style={{borderBottom: '1px solid #ccc'}}>Custom</li>
                 <li style={{borderBottom: '1px solid #ccc'}}>Personal Best</li>
                 <li>Exit</li>
