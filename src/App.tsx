@@ -27,7 +27,34 @@ function App() {
   const [timer, setTimer] = useState(0);
   // 게임 종료 상태를 추가합니다.
   const [gameOver, setGameOver] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [gameWon, setGameWon] = useState(false); // 게임 이겼는지
 
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | undefined;
+  
+    if (gameStarted && !gameOver && !gameWon) {
+      intervalId = setInterval(() => {
+        setTimer((prevTimer) => prevTimer + 1);
+      }, 1000);
+    } 
+    // else {
+    //   clearInterval(intervalId); // 게임이 끝나거나 승리하면 타이머 멈춤
+    // }
+  
+    // return () => clearInterval(intervalId);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    }
+  }, [gameStarted, gameOver, gameWon])
+
+  //게임 이기는 조건 체크
+  useEffect(() => {
+    if (gameStarted && !gameOver && checkWin()) {
+      setGameWon(true);
+      setGameOver(true);
+    }
+  }, [openedCells, gameStarted, gameOver])
 
   function initializeBoard(): Board {
     return Array.from({ length: boardSize }, () =>
@@ -95,7 +122,26 @@ function App() {
     setGameOver(true); // 게임 종료 상태를 true로 설정
   }
 
+  function checkWin(): boolean {
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        if (board[row][col] !== 'mine' && !openedCells[row][col]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   function openCell(row: number, col: number) {
+    if (!gameStarted) {
+      setGameStarted(true);
+    }
+    if (checkWin()) {
+      setGameOver(true);
+      setGameStarted(false); // 게임 승리 시 게임 시작 상태를 false로 설정
+    }
+
     if (openedCells[row][col] || flaggedCells[row][col] || gameOver) return;
 
         // 만약 지뢰를 클릭했다면, 모든 지뢰를 보여주고 게임을 종료합니다.
@@ -191,8 +237,8 @@ function App() {
     setZeroCells([]);
     setGameOver(false);
     setRemainingMines(mineCount);
-    // setTimer(0);
-
+    setGameStarted(false);
+    setTimer(0);
   }
 
   useEffect(() => {
