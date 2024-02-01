@@ -31,7 +31,7 @@
   border: 1px solid #343434f8;
   /* border-radius: 5px; */
   box-shadow: 0 2px 5px rgba(91, 91, 91, 0.2);
-  position: absolute; /* 절대 위치 설정 */
+  position: absolute; 
   top: 13.7%; 
   left: 6%;
   width: 115px;

@@ -9,6 +9,18 @@ type ZeroCells = Array<[number, number]>;
 // 깃발 상태를 나타내는 타입 추가
 type FlaggedCells = boolean[][];
 type Level = 'beginner' | 'intermediate' | 'expert';
+type LevelConfig = {
+  width: number;
+  height: number;
+  mines: number;
+};
+
+// 각 레벨에 따른 게임 보드 크기와 지뢰 수 설정
+const levels: Record<Level, LevelConfig> = {
+  beginner: { width: 8, height: 8, mines: 10 },
+  intermediate: { width: 16, height: 16, mines: 40 },
+  expert: { width: 32, height: 16, mines: 100 }, // 예를 들어 expert는 직사각형 게임 보드
+};
 
 function App() {
   // const boardSize = 8;
@@ -23,7 +35,7 @@ function App() {
   // 0 값을 갖는 셀의 위치를 저장하는 상태를 추가
   const [zeroCells, setZeroCells] = useState<ZeroCells>([]);
   // 깃발이 꽂힌 셀의 상태를 추가.
-  const [flaggedCells, setFlaggedCells] = useState<FlaggedCells>(initializeFlaggedCells());
+  const [flaggedCells, setFlaggedCells] = useState<FlaggedCells>([]); // 빈 배열로 초기화
   // 현재 선택된 셀의 위치를 추적하는 상태를 추가.
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null); //스페이스바 위함
   // 지뢰의 갯수를 표시할 상태를 추가합니다. 
@@ -40,35 +52,50 @@ function App() {
     setShowMenu(!showMenu);
   };
 
-  const levels: Record<Level, { size: number; mines: number }> = {
-    beginner: { size: 8, mines: 10 },
-    intermediate: { size: 16, mines: 40 },
-    expert: { size: 32, mines: 100 },
-  };
-  const [level, setLevel] = useState(initialLevel);
+  
+  const [level, setLevel] = useState<Level>(initialLevel);
+  const [width, setWidth] = useState(levels[initialLevel].width);
+  const [height, setHeight] = useState(levels[initialLevel].height);
+  const [mineCount, setMineCount] = useState(levels[initialLevel].mines);
+  useEffect(() => {
+    // 난이도 변경 시 새로운 설정을 적용
+    const config = levels[level];
+    setWidth(config.width);
+    setHeight(config.height);
+    setMineCount(config.mines);
+    resetGame(); // 보드 및 관련 상태 초기화
+  }, [level]);
+
   const [board, setBoard] = useState<Board>([]); // 빈 배열로 초기화
 
   // const [level, setLevel] = useState<Level>(initialLevel);
-  const [boardSize, setBoardSize] = useState(levels[initialLevel].size);
-  const [mineCount, setMineCount] = useState(levels[initialLevel].mines);
+  // const [boardSize, setBoardSize] = useState(levels[initialLevel].size);
 
   useEffect(() => {
     // boardSize와 mineCount가 정의된 후에 보드를 초기화합니다.
-    const initialBoard = initializeBoard(boardSize);
+    const initialBoard = initializeBoard(width, height);
     setBoard(initialBoard);
-  }, [boardSize]);
+  }, [width, height]);
 
     
 
   useEffect(() => {
     // 난이도 변경 시 보드 초기화
     resetGame();
-  }, [level]);
+  // }, [level]);
+  }, [width, height, mineCount]); // 의존성 배열에 boardSize와 mineCount를 추가합니다.
 
+  useEffect(() => {
+    // boardSize가 설정된 후에 flaggedCells의 초기 상태를 설정
+    setFlaggedCells(initializeFlaggedCells(width, height));
+  }, [width, height]);
+  
   const changeLevel = (newLevel: Level) => {
-    setLevel(newLevel);
-    setBoardSize(levels[newLevel].size);
-    setMineCount(levels[newLevel].mines);
+    const levelConfig = levels[newLevel];
+    setWidth(levelConfig.width);
+    setHeight(levelConfig.height);
+    setMineCount(levelConfig.mines);
+    resetGame();
   };
 
   const resetButtonImage = gameWon
@@ -102,29 +129,27 @@ function App() {
     }
   }, [openedCells, gameStarted, gameOver])
 
-  function initializeBoard(size: number): Board {
-    return Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => 'empty' as Cell)
+  function initializeBoard(width: number, height: number): Board {
+    return Array.from({ length: height }, () =>
+      Array.from({ length: width }, () => 'empty')
     );
   }
-  // function initializeOpenedCells(): OpenedCells {
-  //   return Array.from({ length: boardSize }, () =>
-  //     Array.from({ length: boardSize }, () => false)
-  //   );
-  // }
-  function initializeOpenedCells(size: number): OpenedCells {
-    return Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => false)
+  
+  function initializeOpenedCells(width: number, height: number): OpenedCells {
+    return Array.from({ length: height }, () =>
+      Array.from({ length: width }, () => false)
     );
   }
-  function placeMines(board: Board, firstClickRow: number, firstClickCol: number): Board {
+  function placeMines(board: Board, firstClickRow: number, firstClickCol: number, width: number, height: number): Board {
     let placedMines = 0;
     while (placedMines < mineCount) {
-      const row = Math.floor(Math.random() * boardSize);
-      const col = Math.floor(Math.random() * boardSize);
+      const row = Math.floor(Math.random() * height);
+      const col = Math.floor(Math.random() * width);
 
-      // 첫 번째 클릭한 셀과 그 주변 셀에는 지뢰를 배치x
-      if (board[row][col] === 'empty' && !isFirstClickAdjacent(row, col, firstClickRow, firstClickCol)) {
+         // 첫 번째 클릭한 셀에만 지뢰를 배치 ㄴㄴ
+      if (row === firstClickRow && col === firstClickCol) continue;
+
+      if (board[row][col] === 'empty') {
         board[row][col] = 'mine';
         placedMines++;
       }
@@ -136,6 +161,8 @@ function App() {
   function isFirstClickAdjacent(row: number, col: number, firstClickRow: number, firstClickCol: number): boolean {
     return Math.abs(row - firstClickRow) <= 1 && Math.abs(col - firstClickCol) <= 1;
   }
+
+  //문제가 있던 함수 !!
   function calculateMines(board: Board): Board {
     let tempZeroCells: ZeroCells = []; // 0 값을 갖는 셀의 위치를 임시 저장할 배열
 
@@ -145,14 +172,14 @@ function App() {
       [1, -1], [1, 0], [1, 1]
     ];
 
-    for (let row = 0; row < boardSize; row++) {
-      for (let col = 0; col < boardSize; col++) {
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
         if (board[row][col] === 'mine') continue;
 
         let mineCount = 0;
         for (let [dx, dy] of directions) {
           const newRow = row + dx, newCol = col + dy;
-          if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize && board[newRow][newCol] === 'mine') {
+          if (newRow >= 0 && newRow < height && newCol >= 0 && newCol < width  && board[newRow][newCol] === 'mine') {
             mineCount++;
           }
         }
@@ -179,8 +206,8 @@ function App() {
   }
 
   function checkWin(): boolean {
-    for (let row = 0; row < boardSize; row++) {
-      for (let col = 0; col < boardSize; col++) {
+    for (let row = 0; row < (height); row++) {
+      for (let col = 0; col < width ; col++) {
         if (board[row][col] !== 'mine' && !openedCells[row][col]) {
           return false;
         }
@@ -193,7 +220,7 @@ function App() {
     if (!gameStarted) {
       setGameStarted(true);
       // 여기서 첫 클릭된 셀을 기준으로 지뢰를 배치합니다.
-      const newBoardWithMines = placeMines(board, row, col); // 첫 클릭 위치를 인자로 지뢰 배치
+      const newBoardWithMines = placeMines(board, row, col, width, height); // 첫 클릭 위치를 인자로 지뢰 배치
       const calculatedBoard = calculateMines(newBoardWithMines);
       setBoard(calculatedBoard);
       // 첫 번째 셀을 열기 전에 지뢰가 배치되도록 로직을 조정
@@ -234,8 +261,8 @@ function App() {
             const newRow = currentRow + dx;
             const newCol = currentCol + dy;
             if (
-              newRow >= 0 && newRow < boardSize && 
-              newCol >= 0 && newCol < boardSize &&
+              newRow >= 0 && newRow < height && 
+              newCol >= 0 && newCol < width &&
               !newOpenedCells[newRow][newCol] 
             ) {
               queue.push([newRow, newCol]);
@@ -250,9 +277,9 @@ function App() {
     setOpenedCells(newOpenedCells);
   }
 
-    function initializeFlaggedCells(size: number): FlaggedCells {
-    return Array.from({ length: size }, () =>
-      Array.from({ length: size }, () => false)
+  function initializeFlaggedCells(width: number, height: number): FlaggedCells {
+    return Array.from({ length: height }, () =>
+      Array.from({ length: width }, () => false)
     );
   }
   
@@ -284,13 +311,14 @@ function App() {
   }
 
   function resetGame() {
-    const newBoard = initializeBoard(boardSize);
-
+    const newBoard = initializeBoard(width, height);
+    const newOpenedCells = initializeOpenedCells(width, height);
+    const newFlaggedCells = initializeFlaggedCells(width, height);
   // 보드 상태를 초기화
   setBoard(newBoard);
   // 나머지 상태들을 초기화
-  setOpenedCells(initializeOpenedCells(boardSize)); 
-  setFlaggedCells(initializeFlaggedCells(boardSize));
+  setOpenedCells(initializeOpenedCells(width, height)); 
+  setFlaggedCells(initializeFlaggedCells(width, height));
   setZeroCells([]);
   setGameOver(false);
   setRemainingMines(mineCount);
@@ -300,14 +328,12 @@ function App() {
   }
 
   useEffect(() => {
-    const initialBoard = initializeBoard(boardSize);
+    const initialBoard = initializeBoard(width, height);
     setBoard(initialBoard); 
-  }, [boardSize]);
+    setOpenedCells(initializeOpenedCells(width, height));
+    setFlaggedCells(initializeFlaggedCells(width, height));
+  }, [width, height, mineCount]);
 
-  // boardSize가 설정된 후 openedCells를 초기화하는 useEffect
-  useEffect(() => {
-    setOpenedCells(initializeOpenedCells(boardSize));
-  }, [boardSize]);
 
   
   return (
