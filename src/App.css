@@ -1,3 +1,12 @@
+.cell-1 { color: blue; font-weight:900;}
+.cell-2 { color: green; font-weight: 900;}
+.cell-3 { color: red; font-weight: 900;}
+.cell-4 { color: rgb(18, 0, 138); font-weight: 900;}
+.cell-5 { color: maroon; font-weight: 900;}
+.cell-6 { color: turquoise; font-weight: 900;}
+.cell-7 { color: black; font-weight: 900;}
+.cell-8 { color: gray; font-weight: 900;}
+
 .app-container {
   display: flex;
   justify-content: center;
@@ -26,7 +35,7 @@
 
 .mini-game-nav {
   /* padding-top: -3px; */
-  padding-bottom: 5px;
+  padding-bottom: 7px;
   position: relative;
   z-index: 10;
 }

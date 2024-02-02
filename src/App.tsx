@@ -409,7 +409,7 @@ useEffect(() => {
           <div className="game-menu active">
             {/* // <div className={`game-menu ${showMenu ? 'active' : ''}`}> */}
               <ul className="game-menu-ul">
-                <li onClick={() => {resetGame(); setShowMenu(false);}} style={{borderBottom: '2px solid #7B7B7B' , padding: '4px 8px'}}>New(F2)</li>
+                <li onClick={() => {resetGame(); setShowMenu(false);}} style={{borderBottom: '2px solid #7B7B7B' , padding: '4px 8px'}}>New (F2)</li>
                 <li onClick={() => {changeLevel('beginner'); setShowMenu(false);}} style={{ padding: '4px 8px' }}>Beginner</li>
                 <li onClick={() => {changeLevel('intermediate'); setShowMenu(false);}} style={{ padding: '4px 8px' }}>Intermediate</li>
                 <li onClick={() => {changeLevel('expert'); setShowMenu(false);}}style={{ padding: '4px 8px' }}>Expert</li>
@@ -477,28 +477,32 @@ useEffect(() => {
       <div className="game-board" ref={elementRef} >
         {board.map((row, rowIndex) => (
           <div key={rowIndex} className="board-row">
-            {row.map((cell, cellIndex) => (
-              <div
-                key={cellIndex}
-                className={`cell ${openedCells[rowIndex][cellIndex] ? 'opened' : ''} ${flaggedCells[rowIndex][cellIndex] ? 'flagged' : ''}`}
-                onClick={() => openCell(rowIndex, cellIndex)}
-                onContextMenu={(event) => { event.preventDefault(); toggleFlag(rowIndex, cellIndex); }}
-                onMouseEnter={() => handleCellMouseEnter(rowIndex, cellIndex)}
-                tabIndex={0} // 키보드 포커스를 위해 tabIndex를 0으로 설정
-                style={{ cursor: 'pointer' }}
-              >
-                {/* 깃발 표시 로직 */}
-                {flaggedCells[rowIndex][cellIndex] && !openedCells[rowIndex][cellIndex]
-                  ? <img src={flagImage} alt="Flag" style={{ width: '20px', height: '20px' }} />
-                  : openedCells[rowIndex][cellIndex]
-                    ? (cell === 'mine'
-                      ? <img src={mineImage} alt="Mine" />
-                      : typeof cell === 'number' && cell > 0
-                        ? cell
-                        : '')
-                    : <img src={blankCellImage} alt="Blank" />}
-              </div>
-            ))}
+            {row.map((cell, cellIndex) => {
+              // 숫자에 따라 클래스 이름을 결정합니다.
+              const cellClass = typeof cell === 'number' && cell > 0 ? `cell-${cell}` : '';
+              return (
+                <div
+                  key={cellIndex}
+                  className={`cell ${openedCells[rowIndex][cellIndex] ? 'opened' : ''} ${flaggedCells[rowIndex][cellIndex] ? 'flagged' : ''} ${cellClass}`}
+                  onClick={() => openCell(rowIndex, cellIndex)}
+                  onContextMenu={(event) => { event.preventDefault(); toggleFlag(rowIndex, cellIndex); }}
+                  onMouseEnter={() => handleCellMouseEnter(rowIndex, cellIndex)}
+                  tabIndex={0}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {/* 깃발 표시 로직 */}
+                  {flaggedCells[rowIndex][cellIndex] && !openedCells[rowIndex][cellIndex]
+                    ? <img src={flagImage} alt="Flag" style={{ width: '20px', height: '20px' }} />
+                    : openedCells[rowIndex][cellIndex]
+                      ? (cell === 'mine'
+                        ? <img src={mineImage} alt="Mine" />
+                        : typeof cell === 'number' && cell > 0
+                          ? cell
+                          : '')
+                      : <img src={blankCellImage} alt="Blank" />}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
