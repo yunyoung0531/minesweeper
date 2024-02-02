@@ -5,8 +5,18 @@ import { RootState } from './app/store';
 import { startGame, endGame, winGame, selectGameStarted, selectGameOver, selectGameWon, resetGameStarted, resetGameOver, resetGameWon,
   startTimer, updateTimer, resetTimer,
   changeLevel as changeLevelAction, selectLevel, selectWidth, selectHeight, selectMineCount,
-  selectRemainingMines, updateRemainingMines
+  selectRemainingMines, updateRemainingMines,
+  updateCustomGameSettings
   } from './features/game/gameSlice';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Modal, Button } from 'react-bootstrap';
+import styled from 'styled-components';
+
+const VerticalMiddleTd = styled.div`
+  display: flex;
+  align-items: center;
+  height: 100%;
+`;
 
 
 // 셀의 상태를 나타내는 타입
@@ -115,11 +125,11 @@ function App() {
   }, [openedCells, gameStarted, gameOver])
 
   
-  function initializeOpenedCells(width: number, height: number): OpenedCells {
-    return Array.from({ length: height }, () =>
-      Array.from({ length: width }, () => false)
-    );
-  }
+  // function initializeOpenedCells(width: number, height: number): OpenedCells {
+  //   return Array.from({ length: height }, () =>
+  //     Array.from({ length: width }, () => false)
+  //   );
+  // }
   function placeMines(board: Board, firstClickRow: number, firstClickCol: number, width: number, height: number): Board {
     let placedMines = 0;
     while (placedMines < mineCount) {
@@ -138,9 +148,9 @@ function App() {
   }
 
   //첫번째 클릭한 셀 주변인지 확인
-  function isFirstClickAdjacent(row: number, col: number, firstClickRow: number, firstClickCol: number): boolean {
-    return Math.abs(row - firstClickRow) <= 1 && Math.abs(col - firstClickCol) <= 1;
-  }
+  // function isFirstClickAdjacent(row: number, col: number, firstClickRow: number, firstClickCol: number): boolean {
+  //   return Math.abs(row - firstClickRow) <= 1 && Math.abs(col - firstClickCol) <= 1;
+  // }
 
   //문제가 있던 함수 !!
   function calculateMines(board: Board): Board {
@@ -290,11 +300,6 @@ function App() {
 }
 
 
-  function handleContextMenu(event: React.MouseEvent, row: number, col: number) {
-    event.preventDefault();
-    toggleFlag(row, col);
-  }
-
   const resetGame = () => {
     dispatch(resetGameStarted());
     dispatch(resetGameOver());
@@ -313,7 +318,33 @@ function App() {
     dispatch(updateRemainingMines(mineCount));
   }
 
-  
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  // Custom 게임 설정을 위한 상태 변수 선언
+const [customWidth, setCustomWidth] = useState(0);
+const [customHeight, setCustomHeight] = useState(0);
+const [customMines, setCustomMines] = useState(0);
+
+const handleSubmit = () => {
+  // 입력값 유효성 검사
+  if(customWidth > 0 && customHeight > 0 && customMines > 0) {
+    // updateCustomGameSettings 액션 디스패치
+    dispatch(updateCustomGameSettings({
+      width: customWidth,
+      height: customHeight,
+      mineCount: customMines
+    }));
+    handleClose(); // 모달 닫기
+    resetGame();
+  } else {
+    // 유효하지 않은 입력값 처리
+    alert("Please enter valid numbers for width, height, and mines.");
+  }
+};
+
   return (
     <div 
       className="app-container" 
@@ -336,7 +367,44 @@ function App() {
                 <li onClick={() => changeLevel('beginner')}>Beginner</li>
                 <li onClick={() => changeLevel('intermediate')}>Intermediate</li>
                 <li onClick={() => changeLevel('expert')}>Expert</li>
-                <li style={{borderBottom: '1px solid #ccc'}}>Custom</li>
+                <li onClick={handleShow} style={{borderBottom: '1px solid #ccc'}}>Custom</li>
+                <Modal show={show} onHide={handleClose} className='custom-modal'>
+                  <Modal.Header closeButton>
+                    <Modal.Title><h2>Custom Game Setup</h2></Modal.Title>
+                  </Modal.Header>
+                  <Modal.Body>
+                    <div>
+                              <VerticalMiddleTd>Game Height:
+                              <input
+                                type="text"
+                                value={customHeight}
+                                onChange={(e) => setCustomHeight(Number(e.target.value))}
+                              />
+                              </VerticalMiddleTd>
+                              <VerticalMiddleTd>Game width:
+                              <input
+                                type="text"
+                                value={customWidth}
+                                onChange={(e) => setCustomWidth(Number(e.target.value))}
+                              />
+                              </VerticalMiddleTd>
+                              <VerticalMiddleTd>
+                              Number of Bobs:
+                              <input
+                                type="text"
+                                value={customMines}
+                                onChange={(e) => setCustomMines(Number(e.target.value))}
+                              />
+                                </VerticalMiddleTd>
+                    </div>
+                  </Modal.Body>
+                  <Modal.Footer>
+                    
+                    <Button variant="primary" onClick={handleSubmit}>
+                      ok
+                    </Button>
+                  </Modal.Footer>
+                </Modal>
                 <li style={{borderBottom: '1px solid #ccc'}}>Personal Best</li>
                 <li>Exit</li>
               </ul>

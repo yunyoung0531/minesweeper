@@ -113,6 +113,22 @@ export const gameSlice = createSlice({
             state.remainingMines = action.payload;
         },
 
+        updateCustomGameSettings: (
+            state,
+            action: PayloadAction<{ width: number; height: number; mineCount: number }>
+        ) => {
+            const { width, height, mineCount } = action.payload;
+            state.width = width;
+            state.height = height;
+            state.mineCount = mineCount;
+
+            // 나머지 게임 상태를 초기화 또는 업데이트할 수 있습니다.
+            state.gameStarted = false;
+            state.gameOver = false;
+            state.gameWon = false;
+            state.remainingMines = mineCount;
+            // 필요에 따라 board, openedCells, flaggedCells 등을 재설정할 수 있습니다.
+        },
     },
 });
 
@@ -132,5 +148,7 @@ export const selectHeight = (state: RootState) => state.game.height;
 export const selectMineCount = (state: RootState) => state.game.mineCount;
 
 export const selectRemainingMines = (state: RootState) => state.game.remainingMines;
+
+export const { updateCustomGameSettings } = gameSlice.actions;
 
 export default gameSlice.reducer;
