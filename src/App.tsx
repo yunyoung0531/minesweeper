@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from './app/store'; 
+import { startGame, endGame, winGame, selectGameStarted, selectGameOver, selectGameWon, resetGameStarted, resetGameOver, resetGameWon,
+  startTimer, updateTimer, resetTimer,
+  changeLevel as changeLevelAction, selectLevel, selectWidth, selectHeight, selectMineCount,
+  selectRemainingMines, updateRemainingMines
+  } from './features/game/gameSlice';
+
 
 // 셀의 상태를 나타내는 타입
 type Cell = 'empty' | 'mine' | number;
@@ -23,10 +31,13 @@ const levels: Record<Level, LevelConfig> = {
 };
 
 function App() {
-  // const boardSize = 8;
-  // const mineCount = 10;
+  const dispatch = useDispatch();
+
+  const gameStarted = useSelector(selectGameStarted);
+  const gameOver = useSelector(selectGameOver);
+  const gameWon = useSelector(selectGameWon);
+
   const defaultMineCount = 10;
-  const initialLevel = 'beginner';
   const mineImage = 'https://freeminesweeper.org/images/bombrevealed.gif';
   const blankCellImage = 'https://freeminesweeper.org/images/blank.gif';
   const flagImage = 'https://freeminesweeper.org/images/bombflagged.gif';
@@ -39,101 +50,70 @@ function App() {
   // 현재 선택된 셀의 위치를 추적하는 상태를 추가.
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null); //스페이스바 위함
   // 지뢰의 갯수를 표시할 상태를 추가합니다. 
-  // const [remainingMines, setRemainingMines] = useState(mineCount);
-  const [remainingMines, setRemainingMines] = useState(defaultMineCount);
-  const [timer, setTimer] = useState(0);
-  // 게임 종료 상태를 추가합니다.
-  const [gameOver, setGameOver] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [gameWon, setGameWon] = useState(false); // 게임 이겼는지
+
+  const timer = useSelector((state: RootState) => state.game.timer);
+
+  const level = useSelector(selectLevel);
+  const width = useSelector(selectWidth);
+  const height = useSelector(selectHeight);
+  const mineCount = useSelector(selectMineCount);
+  const remainingMines = useSelector(selectRemainingMines);
+
 
   const [showMenu, setShowMenu] = useState(false);//네비게이션바- 모달
   const toggleMenu = () => {
     setShowMenu(!showMenu);
   };
 
-  
-  const [level, setLevel] = useState<Level>(initialLevel);
-  const [width, setWidth] = useState(levels[initialLevel].width);
-  const [height, setHeight] = useState(levels[initialLevel].height);
-  const [mineCount, setMineCount] = useState(levels[initialLevel].mines);
   useEffect(() => {
-    // 난이도 변경 시 새로운 설정을 적용
-    const config = levels[level];
-    setWidth(config.width);
-    setHeight(config.height);
-    setMineCount(config.mines);
-    resetGame(); // 보드 및 관련 상태 초기화
-  }, [level]);
-
-  const [board, setBoard] = useState<Board>([]); // 빈 배열로 초기화
-
-  // const [level, setLevel] = useState<Level>(initialLevel);
-  // const [boardSize, setBoardSize] = useState(levels[initialLevel].size);
-
-  useEffect(() => {
-    // boardSize와 mineCount가 정의된 후에 보드를 초기화합니다.
-    const initialBoard = initializeBoard(width, height);
-    setBoard(initialBoard);
-  }, [width, height]);
-
-    
-
-  useEffect(() => {
-    // 난이도 변경 시 보드 초기화
     resetGame();
-  // }, [level]);
-  }, [width, height, mineCount]); // 의존성 배열에 boardSize와 mineCount를 추가합니다.
+  }, [level, dispatch]);
+
+  const [board, setBoard] = useState<Board>([]);
 
   useEffect(() => {
-    // boardSize가 설정된 후에 flaggedCells의 초기 상태를 설정
+    resetGame();
+  }, [width, height, mineCount]);
+
+  useEffect(() => {
+    initializeBoard();
+  }, [width, height, mineCount]);
+
+  const changeLevel = (newLevel: Level) => {
+    dispatch(changeLevelAction(newLevel));
+  };
+
+  useEffect(() => {
     setFlaggedCells(initializeFlaggedCells(width, height));
   }, [width, height]);
   
-  const changeLevel = (newLevel: Level) => {
-    const levelConfig = levels[newLevel];
-    setWidth(levelConfig.width);
-    setHeight(levelConfig.height);
-    setMineCount(levelConfig.mines);
-    resetGame();
-  };
-
   const resetButtonImage = gameWon
   ? 'https://freeminesweeper.org/images/facewin.gif'
   : gameOver
   ? 'https://freeminesweeper.org/images/facedead.gif'
   : 'https://freeminesweeper.org/images/facesmile.gif';
+
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | undefined;
-  
+    let intervalId: number | undefined; // 타입을 number | undefined로 지정
     if (gameStarted && !gameOver && !gameWon) {
-      intervalId = setInterval(() => {
-        setTimer((prevTimer) => prevTimer + 1);
-      }, 1000);
-    } 
-    // else {
-    //   clearInterval(intervalId); // 게임이 끝나거나 승리하면 타이머 멈춤
-    // }
-  
-    // return () => clearInterval(intervalId);
-    return () => {
-      if (intervalId) clearInterval(intervalId);
+        intervalId = window.setInterval(() => { // window.setInterval을 사용하여 브라우저의 타이머 ID를 명시적으로 지정
+        dispatch(updateTimer());
+        }, 1000);
     }
-  }, [gameStarted, gameOver, gameWon])
+    return () => {
+        if (intervalId) clearInterval(intervalId);
+    };
+}, [gameStarted, gameOver, gameWon, dispatch]);
+
 
   //게임 이기는 조건 체크
   useEffect(() => {
     if (gameStarted && !gameOver && checkWin()) {
-      setGameWon(true);
-      setGameOver(true);
-    }
+      dispatch(winGame());
+      dispatch(endGame());
+      }
   }, [openedCells, gameStarted, gameOver])
 
-  function initializeBoard(width: number, height: number): Board {
-    return Array.from({ length: height }, () =>
-      Array.from({ length: width }, () => 'empty')
-    );
-  }
   
   function initializeOpenedCells(width: number, height: number): OpenedCells {
     return Array.from({ length: height }, () =>
@@ -202,7 +182,7 @@ function App() {
       row.map((cell, cellIndex) => cell === 'mine' || openedCells[rowIndex][cellIndex])
     );
     setOpenedCells(newOpenedCells);
-    setGameOver(true); // 게임 종료 상태를 true로 설정
+    dispatch(endGame());
   }
 
   function checkWin(): boolean {
@@ -218,7 +198,7 @@ function App() {
 
   function openCell(row: number, col: number) {
     if (!gameStarted) {
-      setGameStarted(true);
+      dispatch(startGame());
       // 여기서 첫 클릭된 셀을 기준으로 지뢰를 배치합니다.
       const newBoardWithMines = placeMines(board, row, col, width, height); // 첫 클릭 위치를 인자로 지뢰 배치
       const calculatedBoard = calculateMines(newBoardWithMines);
@@ -226,8 +206,8 @@ function App() {
       // 첫 번째 셀을 열기 전에 지뢰가 배치되도록 로직을 조정
     }
     if (checkWin()) {
-      setGameOver(true);
-      setGameStarted(false); // 게임 승리 시 게임 시작 상태를 false로 설정
+      dispatch(endGame());
+      dispatch(resetGameStarted()); // 게임 승리 시 게임 시작 상태를 false로 설정
     }
 
     if (openedCells[row][col] || flaggedCells[row][col] || gameOver) return;
@@ -296,13 +276,18 @@ function App() {
   }
 
   function toggleFlag(row: number, col: number) {
-    const newFlaggedCells = flaggedCells.map(row => [...row]);
-    newFlaggedCells[row][col] = !newFlaggedCells[row][col];
+    const newFlaggedCells = flaggedCells.map((rowArray, rowIndex) => 
+      rowArray.map((cell, colIndex) => 
+        rowIndex === row && colIndex === col ? !cell : cell
+      )
+    );
     setFlaggedCells(newFlaggedCells);
 
-    // 깃발이 추가되거나 제거될 때 지뢰의 갯수를 업데이트
-    setRemainingMines(prev => newFlaggedCells[row][col] ? prev - 1 : prev + 1);
-  }
+    // 깃발이 추가되거나 제거될 때 남은 지뢰 수 업데이트
+    const flagged = newFlaggedCells[row][col];
+    const adjustment = flagged ? -1 : 1; // 깃발 추가 시 -1, 제거 시 +1
+    dispatch(updateRemainingMines(remainingMines + adjustment));
+}
 
 
   function handleContextMenu(event: React.MouseEvent, row: number, col: number) {
@@ -310,30 +295,23 @@ function App() {
     toggleFlag(row, col);
   }
 
-  function resetGame() {
-    const newBoard = initializeBoard(width, height);
-    const newOpenedCells = initializeOpenedCells(width, height);
-    const newFlaggedCells = initializeFlaggedCells(width, height);
-  // 보드 상태를 초기화
-  setBoard(newBoard);
-  // 나머지 상태들을 초기화
-  setOpenedCells(initializeOpenedCells(width, height)); 
-  setFlaggedCells(initializeFlaggedCells(width, height));
-  setZeroCells([]);
-  setGameOver(false);
-  setRemainingMines(mineCount);
-  setGameStarted(false);
-  setTimer(0);
-  setGameWon(false);
+  const resetGame = () => {
+    dispatch(resetGameStarted());
+    dispatch(resetGameOver());
+    dispatch(resetGameWon());
+    dispatch(resetTimer());
+    initializeBoard();
+  };
+
+  function initializeBoard() {
+    const newBoard: Board = Array.from({ length: height }, () =>
+      Array.from({ length: width }, () => 'empty')
+    );
+    setBoard(newBoard);
+    setOpenedCells(Array.from({ length: height }, () => Array.from({ length: width }, () => false)));
+    setFlaggedCells(Array.from({ length: height }, () => Array.from({ length: width }, () => false)));
+    dispatch(updateRemainingMines(mineCount));
   }
-
-  useEffect(() => {
-    const initialBoard = initializeBoard(width, height);
-    setBoard(initialBoard); 
-    setOpenedCells(initializeOpenedCells(width, height));
-    setFlaggedCells(initializeFlaggedCells(width, height));
-  }, [width, height, mineCount]);
-
 
   
   return (
@@ -373,7 +351,6 @@ function App() {
           src={resetButtonImage} 
           alt="Reset Game"
           onClick={resetGame}
-          /* 여기에 게임을 리셋하는 함수를 연결 하기*/
         />
         {/* </button> */}
         <div className="timer">

@@ -2,87 +2,135 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
 
-// 여기에 적절한 타입을 정의합니다.
+type Level = 'beginner' | 'intermediate' | 'expert';
 type Cell = 'empty' | 'mine' | number;
-type Board = Cell[][];
-type OpenedCells = boolean[][];
 
-// 게임의 초기 상태를 정의합니다.
 interface GameState {
-    board: Board;
-    openedCells: OpenedCells;
+    gameStarted: boolean;
+    gameOver: boolean;
+    gameWon: boolean;
+    timer: number;
+    level: 'beginner' | 'intermediate' | 'expert';
+    width: number;
+    height: number;
+    mineCount: number;
+    remainingMines: number;
+    board: Cell[][];
+    openedCells: boolean[][];
+    flaggedCells: boolean[][];
+    zeroCells: Array<[number, number]>;
 }
 
-const boardSize = 8; // 이 값을 기반으로 보드 크기를 설정합니다.
-
-// board 초기화
-const initializeBoard = (): Board => {
-  // 2차원 배열을 생성하고 모든 값을 'empty'로 초기화합니다.
-    return Array.from({ length: boardSize }, () =>
-        Array.from({ length: boardSize }, () => 'empty' as Cell)
-    );
-};
-
-// openedCells 초기화
-const initializeOpenedCells = (): OpenedCells => {
-  // 2차원 배열을 생성하고 모든 값을 false로 초기화합니다.
-    return Array.from({ length: boardSize }, () =>
-        Array.from({ length: boardSize }, () => false)
-    );
-};
-
-
+// 초기 상태에 레벨과 보드 설정의 초기값을 추가
 const initialState: GameState = {
-    board: initializeBoard(),
-    openedCells: initializeOpenedCells(),
+    gameStarted: false,
+    gameOver: false,
+    gameWon: false,
+    timer: 0,
+    level: 'beginner', // 기본 레벨
+    width: 8, // 기본 너비
+    height: 8, // 기본 높이
+    mineCount: 10, // 기본 지뢰 수
+    remainingMines: 10,
+    board: [],
+    openedCells: [],
+    flaggedCells: [],
+    zeroCells: [],
 };
+
+interface LevelSettings {
+    width: number;
+    height: number;
+    mines: number;
+}
+const levelConfigs: Record<Level, LevelSettings> = {
+    beginner: { width: 8, height: 8, mines: 10 },
+    intermediate: { width: 16, height: 16, mines: 40 },
+    expert: { width: 30, height: 16, mines: 99 }, // 가정: 'expert' 설정을 예로 듭니다
+};
+
+function getLevelSettings(level: Level): LevelSettings {
+    // 주어진 레벨에 해당하는 설정 반환
+    // 레벨이 유효하지 않은 경우 기본값으로 'beginner' 설정을 반환
+    return levelConfigs[level] || levelConfigs.beginner;
+}
 
 export const gameSlice = createSlice({
     name: 'game',
     initialState,
     reducers: {
-        resetGame: (state) => {
-            state.board = initializeBoard();
-            state.openedCells = initializeOpenedCells();
+        // 게임 시작 액션
+        startGame: (state) => {
+            state.gameStarted = true;
+            state.gameOver = false; // 게임 시작 시 gameOver와 gameWon을 초기화
+            state.gameWon = false;
         },
-        openCell: (state, action: PayloadAction<{ row: number; col: number }>) => {
-            const { row, col } = action.payload;
-            // 만약 셀이 이미 열려있거나 지뢰가 있다면 더 이상 진행하지 않습니다.
-            if (state.openedCells[row][col] || state.board[row][col] === 'mine') {
-            return;
-            }
-            // 선택된 셀을 연다.
-            state.openedCells[row][col] = true;
-    
-            // 만약 선택된 셀 주변에 지뢰가 없다면 (즉, 셀의 값이 0이라면) 주변 셀도 연다.
-            if (state.board[row][col] === 0) {
-            const directions = [
-                [-1, -1], [-1, 0], [-1, 1],
-                [0, -1],           [0, 1],
-                [1, -1], [1, 0], [1, 1]
-            ];
-    
-            directions.forEach(([dx, dy]) => {
-                const newRow = row + dx;
-                const newCol = col + dy;
-                if (newRow >= 0 && newRow < state.board.length && newCol >= 0 && newCol < state.board[0].length) {
-                // 재귀적으로 주변 셀을 연다.
-                if (!state.openedCells[newRow][newCol] && state.board[newRow][newCol] === 0) {
-                    state.openedCells[newRow][newCol] = true;
-                }
-                }
-            });
-            }
+        // 게임 오버 액션
+        endGame: (state) => {
+            state.gameOver = true;
         },
-        // 추가 액션들을 정의할 수 있습니다.
+        // 게임 승리 액션
+        winGame: (state) => {
+            state.gameWon = true;
+            state.gameOver = true; // 게임을 이겼으므로 gameOver도 true로 설정
+        },
+        resetGameStarted: (state) => {
+            state.gameStarted = false;
+        },
+    
+          // 게임 오버 상태를 false로 설정
+        resetGameOver: (state) => {
+            state.gameOver = false;
+        },
+
+          // 게임 승리 상태를 false로 설정
+        resetGameWon: (state) => {
+            state.gameWon = false;
+        },
+        startTimer: (state) => {
+            state.timer = 0; // 타이머 초기화
+        },
+        // 타이머 업데이트 (1초마다 호출)
+        updateTimer: (state) => {
+            state.timer += 1; // 타이머를 1초 증가
+        },
+        // 타이머 리셋 (게임 리셋 시 호출)
+        resetTimer: (state) => {
+            state.timer = 0; // 타이머 초기화
+        },
+        
+        // 레벨 변경 액션
+        changeLevel: (state, action: PayloadAction<GameState['level']>) => {
+            // state.level = action.payload;
+            // 여기서 level에 따라 width, height, mineCount 업데이트 로직 구현
+            const { width, height, mines } = getLevelSettings(action.payload);
+            state.width = width;
+            state.height = height;
+            state.mineCount = mines;
+        },
+        
+        updateRemainingMines: (state, action: PayloadAction<number>) => {
+            state.remainingMines = action.payload;
+        },
+
     },
 });
 
-export const { resetGame, openCell } = gameSlice.actions;
+export const {
+    startGame, endGame, winGame, resetGameStarted, resetGameOver, resetGameWon,
+    startTimer, updateTimer, resetTimer,
+    changeLevel, updateRemainingMines
+} = gameSlice.actions;
 
+export const selectGameStarted = (state: RootState) => state.game.gameStarted;
+export const selectGameOver = (state: RootState) => state.game.gameOver;
+export const selectGameWon = (state: RootState) => state.game.gameWon;
 
-// 게임 상태의 선택자를 정의합니다.
-export const selectBoard = (state: RootState) => state.game.board;
-export const selectOpenedCells = (state: RootState) => state.game.openedCells;
+export const selectLevel = (state: RootState) => state.game.level;
+export const selectWidth = (state: RootState) => state.game.width;
+export const selectHeight = (state: RootState) => state.game.height;
+export const selectMineCount = (state: RootState) => state.game.mineCount;
+
+export const selectRemainingMines = (state: RootState) => state.game.remainingMines;
 
 export default gameSlice.reducer;
