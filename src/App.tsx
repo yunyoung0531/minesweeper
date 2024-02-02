@@ -282,6 +282,12 @@ function App() {
       event.preventDefault();
       const [row, col] = selectedCell;
       toggleFlag(row, col); // 선택된 셀에 깃발을 토글
+    } else if (event.key === 'F2') {
+      // New 게임 시작
+      event.preventDefault();
+      resetGame();
+      // 드롭다운 닫기
+      if (showMenu) setShowMenu(false);
     }
   }
 
@@ -321,7 +327,7 @@ function App() {
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  const handleShow = () => {setShow(true);};
 
   // Custom 게임 설정을 위한 상태 변수 선언
 const [customWidth, setCustomWidth] = useState(0);
@@ -393,60 +399,63 @@ useEffect(() => {
     >
       <div className='mini-game'>
         <div className='mini-game-nav'>
-          <a onClick={toggleMenu}>Gameㅤ</a>
-          <a>Optionsㅤ</a>
-          <a>Help</a>
+          <a onClick={toggleMenu} style={{cursor: 'pointer'}}>Gameㅤ</a>
+          <a style={{cursor: 'pointer'}}>Optionsㅤ</a>
+          <a style={{cursor: 'pointer'}}>Help</a>
         </div>
         
       <header className="game-header">
       {showMenu && (
           <div className="game-menu active">
             {/* // <div className={`game-menu ${showMenu ? 'active' : ''}`}> */}
-              <ul>
-                <li style={{borderBottom: '1px solid #ccc'}}>New</li>
-                <li onClick={() => changeLevel('beginner')}>Beginner</li>
-                <li onClick={() => changeLevel('intermediate')}>Intermediate</li>
-                <li onClick={() => changeLevel('expert')}>Expert</li>
-                <li onClick={handleShow} style={{borderBottom: '1px solid #ccc'}}>Custom</li>
+              <ul className="game-menu-ul">
+                <li onClick={() => {resetGame(); setShowMenu(false);}} style={{borderBottom: '2px solid #7B7B7B' , padding: '4px 8px'}}>New(F2)</li>
+                <li onClick={() => {changeLevel('beginner'); setShowMenu(false);}} style={{ padding: '4px 8px' }}>Beginner</li>
+                <li onClick={() => {changeLevel('intermediate'); setShowMenu(false);}} style={{ padding: '4px 8px' }}>Intermediate</li>
+                <li onClick={() => {changeLevel('expert'); setShowMenu(false);}}style={{ padding: '4px 8px' }}>Expert</li>
+                <li onClick={() => {handleShow();}} style={{borderBottom: '2px solid #7B7B7B', padding: '4px 8px'}} >Custom</li>
                 <Modal show={show} onHide={handleClose} className='custom-modal'>
-                  <Modal.Header closeButton>
-                    <Modal.Title><h2>Custom Game Setup</h2></Modal.Title>
+                  <Modal.Header closeButton onClick={()=>{setShowMenu(false)}}>
+                    <Modal.Title><h4>Custom Game Setup</h4></Modal.Title>
                   </Modal.Header>
                   <Modal.Body>
-                    <div>
-                      <VerticalMiddleTd>Game Height:
+                    <div style={{marginLeft: '30px', marginTop: '-20px', marginBottom: '-20px'}}>
+                      <VerticalMiddleTd>Game Height:ㅤㅤ ㅤ
                       <input
                         type="text"
                         value={customHeight}
                         onChange={(e) => setCustomHeight(Number(e.target.value))}
+                        style={{width: '90px'}}
                       />
                       </VerticalMiddleTd>
-                      <VerticalMiddleTd>Game width:
+                      <VerticalMiddleTd>Game width: ㅤ ㅤ ㅤ
                       <input
                         type="text"
                         value={customWidth}
                         onChange={(e) => setCustomWidth(Number(e.target.value))}
+                        style={{width: '90px'}}
                       />
                       </VerticalMiddleTd>
                       <VerticalMiddleTd>
-                      Number of Bobs:
+                      Number of Bombs:ㅤ
                       <input
                         type="text"
                         value={customMines}
                         onChange={(e) => setCustomMines(Number(e.target.value))}
+                        style={{width: '90px'}}
                       />
                         </VerticalMiddleTd>
                     </div>
                   </Modal.Body>
                   <Modal.Footer>
                     
-                    <Button variant="primary" onClick={handleSubmit}>
-                      ok
+                    <Button className='custom-btn' onClick={() => {handleSubmit(); setShowMenu(false);}}>
+                      OK
                     </Button>
                   </Modal.Footer>
                 </Modal>
-                <li style={{borderBottom: '1px solid #ccc'}}>Personal Best</li>
-                <li>Exit</li>
+                <li style={{borderBottom: '2px solid #7B7B7B', padding: '4px 8px'}}>Personal Best</li>
+                <li style={{borderBottom: '2px solid #7B7B7B', padding: '4px 8px'}}>Exit</li>
               </ul>
             </div>
           )}

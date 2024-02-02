@@ -4,6 +4,7 @@
   align-items: center;
   flex-direction: column;
   height: 100vh; /* 전체 뷰포트 높이 */
+  overflow: hidden; 
   background-color: #000000;
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
   position: relative;
@@ -11,7 +12,11 @@
 
 .mini-game {
   background-color: #b3b3b3;
-  padding: 13px;
+  padding-top: 2px;
+  padding-left: 13px;
+  padding-right: 13px;
+  padding-bottom: 13px;
+
   border-radius: 10px;
   font-size: 13px;
   font-family: Arial, Helvetica, sans-serif;
@@ -20,26 +25,26 @@
 }
 
 .mini-game-nav {
-  /* padding-top: 3px; */
-  padding-bottom: 8px;
+  /* padding-top: -3px; */
+  padding-bottom: 5px;
   position: relative;
   z-index: 10;
 }
 
 .game-menu {
-  background-color: #b3b3b3;
-  border: 1px solid #343434f8;
-  /* border-radius: 5px; */
+  background-color: #BBB;
+  border: 2px solid #7B7B7B;
+  border-bottom-color: #282828;
+  border-right-color: #282828;
   box-shadow: 0 2px 5px rgba(91, 91, 91, 0.2);
   position: absolute; 
   /* top: 13.7%;  */
   /* left: 6%; */
-  margin-top: 190px;
-  margin-left: -10px;
+  margin-top: 157px;
+  margin-left: -6px;
   width: 115px;
-  z-index: 1000;
+  z-index: 1000; 
   display: none;
-  /* padding: -20px !important; */
 }
 .game-menu.active {
   display: block; /* 활성화 상태에서 보여주기 */
@@ -55,10 +60,12 @@
   padding: 8px 12px;
   cursor: pointer;
   text-align: left;
+  font-weight: 600;
 }
 
 .game-menu ul li:hover {
-  background-color: #ddd;
+  /* background-color: #ddd; */
+  color: blue;
 }
 
 
@@ -142,6 +149,60 @@
   height: auto;
 }
 
-.custom-modal {
-  margin-top: 100px;
+.custom-modal .modal-content {
+  background: white;
+  border-radius: 10px;
+}
+
+.custom-modal .modal-header,
+.custom-modal .modal-footer {
+  border-bottom: 1px solid black;
+  border-top: 1px solid black;  
+  background: #ffffff;
+  border-color: white;
+}
+
+
+
+.custom-btn {
+  background-color: #000000 !important;
+  color: white !important;
+}
+
+.custom-modal .modal-body {
+  padding: 10px;
+}
+
+.custom-modal input {
+  margin-left: 10px;
+  padding: 5px;
+  border: 1px solid #d9d9d9;
+  max-width: 50%;
+  box-sizing: border-box; 
+
+}
+
+.custom-modal button {
+  background-color: #f2f2f2;
+  border: 1px solid black;
+  border-radius: 0;
+  padding: 5px 10px;
+  
+}
+
+.custom-modal .modal-dialog {
+  margin: auto;
+  max-width: 25%;
+  max-height: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 1rem);
+}
+
+@media (max-width: 876px) {
+  .custom-modal .modal-dialog{
+    max-width: 45%; 
+    max-height: 50%;
+  }
 }
