@@ -206,6 +206,8 @@ function App() {
     return true;
   }
 
+  const [deathMine, setDeathMine] = useState<[number, number] | null>(null);
+
   function openCell(row: number, col: number) {
     if (!gameStarted) {
       dispatch(startGame());
@@ -219,7 +221,12 @@ function App() {
       dispatch(endGame());
       dispatch(resetGameStarted()); // 게임 승리 시 게임 시작 상태를 false로 설정
     }
-
+  // 만약 지뢰를 클릭했다면, 해당 지뢰의 위치를 저장하고 모든 지뢰를 보여주며 게임을 종료함
+    if (board[row][col] === 'mine') {
+      setDeathMine([row, col]); // 이 지뢰가 패배의 원인이 되었습니다.
+      revealMines();
+      return;
+    }
     if (openedCells[row][col] || flaggedCells[row][col] || gameOver) return;
 
         // 만약 지뢰를 클릭했다면, 모든 지뢰를 보여주고 게임을 종료합니다.
@@ -311,6 +318,7 @@ function App() {
     dispatch(resetGameOver());
     dispatch(resetGameWon());
     dispatch(resetTimer());
+    setDeathMine(null); 
     initializeBoard();
   };
 
@@ -480,6 +488,7 @@ useEffect(() => {
             {row.map((cell, cellIndex) => {
               // 숫자에 따라 클래스 이름을 결정합니다.
               const cellClass = typeof cell === 'number' && cell > 0 ? `cell-${cell}` : '';
+              const isDeathMine = deathMine && deathMine[0] === rowIndex && deathMine[1] === cellIndex;
               return (
                 <div
                   key={cellIndex}
@@ -491,7 +500,9 @@ useEffect(() => {
                   style={{ cursor: 'pointer' }}
                 >
                   {/* 깃발 표시 로직 */}
-                  {flaggedCells[rowIndex][cellIndex] && !openedCells[rowIndex][cellIndex]
+                  {isDeathMine
+                    ? <img src="https://freeminesweeper.org/images/bombdeath.gif" alt="Death Mine" />
+                    : flaggedCells[rowIndex][cellIndex] && !openedCells[rowIndex][cellIndex]
                     ? <img src={flagImage} alt="Flag" style={{ width: '20px', height: '20px' }} />
                     : openedCells[rowIndex][cellIndex]
                       ? (cell === 'mine'
