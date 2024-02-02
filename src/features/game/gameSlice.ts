@@ -46,7 +46,7 @@ interface LevelSettings {
 const levelConfigs: Record<Level, LevelSettings> = {
     beginner: { width: 8, height: 8, mines: 10 },
     intermediate: { width: 16, height: 16, mines: 40 },
-    expert: { width: 30, height: 16, mines: 99 }, // 가정: 'expert' 설정을 예로 듭니다
+    expert: { width: 36, height: 16, mines: 100 }, // 가정: 'expert' 설정을 예로 듭니다
 };
 
 function getLevelSettings(level: Level): LevelSettings {

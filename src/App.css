@@ -32,10 +32,12 @@
   /* border-radius: 5px; */
   box-shadow: 0 2px 5px rgba(91, 91, 91, 0.2);
   position: absolute; 
-  top: 13.7%; 
-  left: 6%;
+  /* top: 13.7%;  */
+  /* left: 6%; */
+  margin-top: 190px;
+  margin-left: -10px;
   width: 115px;
-  z-index: 1000; /* 가장 높은 z-index 값을 설정하여 모든 요소 위에 표시 */
+  z-index: 1000;
   display: none;
   /* padding: -20px !important; */
 }

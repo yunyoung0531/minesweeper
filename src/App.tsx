@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './app/store'; 
@@ -329,8 +329,15 @@ const [customHeight, setCustomHeight] = useState(0);
 const [customMines, setCustomMines] = useState(0);
 
 const handleSubmit = () => {
+  const maxWidth = 100;
+  const maxHeight = 100;
+  const maxMines = Math.floor((customWidth * customHeight) / 3); // 격자칸 수의 1/3 이하
   // 입력값 유효성 검사
-  if(customWidth > 0 && customHeight > 0 && customMines > 0) {
+  if (
+    customWidth > 0 && customWidth <= maxWidth &&
+    customHeight > 0 && customHeight <= maxHeight &&
+    customMines > 0 && customMines <= maxMines
+  ) {
     // updateCustomGameSettings 액션 디스패치
     dispatch(updateCustomGameSettings({
       width: customWidth,
@@ -341,9 +348,42 @@ const handleSubmit = () => {
     resetGame();
   } else {
     // 유효하지 않은 입력값 처리
-    alert("Please enter valid numbers for width, height, and mines.");
+    alert(`Minesweeper dimensions invalid:
+→Width: From 8 to 100
+→Height: from 8 to 100
+→Bombs: 1 to 1/3 of squares`);
   }
 };
+
+const elementRef = useRef<HTMLDivElement>(null); // HTMLDivElement 타입을 useRef에 명시적으로 전달
+
+useEffect(() => {
+  const adjustMenuPosition = () => {
+    // elementRef.current는 게임 보드를 가리키는 DOM 요소입니다.
+    if (elementRef.current) {
+      const rect = elementRef.current.getBoundingClientRect();
+      const gameMenu = document.querySelector('.game-menu');
+      
+      if (gameMenu instanceof HTMLElement) {
+        // 메뉴의 스타일을 직접 조정합니다.
+        gameMenu.style.position = 'absolute';
+        gameMenu.style.top = `${rect.top}px`; // 게임 보드의 상단에 위치하도록 설정합니다.
+        gameMenu.style.left = `${rect.left + rect.width + 10}px`; // 게임 보드의 오른쪽에 위치하도록 설정합니다.
+      }
+    }
+  };
+
+  // 컴포넌트 마운트 시에 메뉴 위치를 조정합니다.
+  adjustMenuPosition();
+
+  // 윈도우 사이즈가 변경될 때마다 메뉴 위치를 다시 조정합니다.
+  window.addEventListener('resize', adjustMenuPosition);
+
+  // 컴포넌트 언마운트 시에 이벤트 리스너를 정리합니다.
+  return () => {
+    window.removeEventListener('resize', adjustMenuPosition);
+  };
+}, []); // 빈 의존성 배열은 컴포넌트가 마운트되고 언마운트될 때만 useEffect를 실행하게 합니다.
 
   return (
     <div 
@@ -360,7 +400,7 @@ const handleSubmit = () => {
         
       <header className="game-header">
       {showMenu && (
-            <div className="game-menu active">
+          <div className="game-menu active">
             {/* // <div className={`game-menu ${showMenu ? 'active' : ''}`}> */}
               <ul>
                 <li style={{borderBottom: '1px solid #ccc'}}>New</li>
@@ -374,28 +414,28 @@ const handleSubmit = () => {
                   </Modal.Header>
                   <Modal.Body>
                     <div>
-                              <VerticalMiddleTd>Game Height:
-                              <input
-                                type="text"
-                                value={customHeight}
-                                onChange={(e) => setCustomHeight(Number(e.target.value))}
-                              />
-                              </VerticalMiddleTd>
-                              <VerticalMiddleTd>Game width:
-                              <input
-                                type="text"
-                                value={customWidth}
-                                onChange={(e) => setCustomWidth(Number(e.target.value))}
-                              />
-                              </VerticalMiddleTd>
-                              <VerticalMiddleTd>
-                              Number of Bobs:
-                              <input
-                                type="text"
-                                value={customMines}
-                                onChange={(e) => setCustomMines(Number(e.target.value))}
-                              />
-                                </VerticalMiddleTd>
+                      <VerticalMiddleTd>Game Height:
+                      <input
+                        type="text"
+                        value={customHeight}
+                        onChange={(e) => setCustomHeight(Number(e.target.value))}
+                      />
+                      </VerticalMiddleTd>
+                      <VerticalMiddleTd>Game width:
+                      <input
+                        type="text"
+                        value={customWidth}
+                        onChange={(e) => setCustomWidth(Number(e.target.value))}
+                      />
+                      </VerticalMiddleTd>
+                      <VerticalMiddleTd>
+                      Number of Bobs:
+                      <input
+                        type="text"
+                        value={customMines}
+                        onChange={(e) => setCustomMines(Number(e.target.value))}
+                      />
+                        </VerticalMiddleTd>
                     </div>
                   </Modal.Body>
                   <Modal.Footer>
@@ -425,7 +465,7 @@ const handleSubmit = () => {
           {String(timer).padStart(3, '0')}
         </div>
       </header>
-      <div className="game-board">
+      <div className="game-board" ref={elementRef} >
         {board.map((row, rowIndex) => (
           <div key={rowIndex} className="board-row">
             {row.map((cell, cellIndex) => (
