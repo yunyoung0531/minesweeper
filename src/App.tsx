@@ -428,6 +428,12 @@ function WinModal({ show, onClose, timer }: WinModalProps) {
     </Modal>
   );
 }
+useEffect(() => {
+  if (timer >= 999) {
+    dispatch(endGame()); 
+    setShowWinModal(false);
+  }
+}, [timer, dispatch]);
 
   return (
     <div 

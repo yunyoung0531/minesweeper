@@ -7,6 +7,10 @@
 .cell-7 { color: black; font-weight: 900;}
 .cell-8 { color: gray; font-weight: 900;}
 
+.cell:focus {
+  outline: none;
+}
+
 .app-container {
   display: flex;
   justify-content: center;
