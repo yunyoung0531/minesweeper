@@ -39,7 +39,11 @@ const levels: Record<Level, LevelConfig> = {
   intermediate: { width: 16, height: 16, mines: 40 },
   expert: { width: 32, height: 16, mines: 100 }, // 예를 들어 expert는 직사각형 게임 보드
 };
-
+interface WinModalProps {
+  show: boolean;
+  onClose: () => void;
+  timer: number;
+}
 function App() {
   const dispatch = useDispatch();
 
@@ -68,6 +72,7 @@ function App() {
   const height = useSelector(selectHeight);
   const mineCount = useSelector(selectMineCount);
   const remainingMines = useSelector(selectRemainingMines);
+  const [showWinModal, setShowWinModal] = useState(false);
 
 
   const [showMenu, setShowMenu] = useState(false);//네비게이션바- 모달
@@ -92,6 +97,14 @@ function App() {
   const changeLevel = (newLevel: Level) => {
     dispatch(changeLevelAction(newLevel));
   };
+
+  useEffect(() => {
+    if (gameStarted && !gameOver && checkWin()) {
+      dispatch(winGame());
+      dispatch(endGame());
+      setShowWinModal(true); 
+    }
+  }, [openedCells, gameStarted, gameOver, dispatch]);
 
   useEffect(() => {
     setFlaggedCells(initializeFlaggedCells(width, height));
@@ -399,6 +412,23 @@ useEffect(() => {
   };
 }, []); // 빈 의존성 배열은 컴포넌트가 마운트되고 언마운트될 때만 useEffect를 실행하게 합니다.
 
+function WinModal({ show, onClose, timer }: WinModalProps) {
+  return (
+    <Modal show={show} onHide={onClose} className="custom-modal">
+      <Modal.Header>
+        <Modal.Title><h4 style={{ fontWeight: '600'}}>Congratulations!</h4></Modal.Title>
+      </Modal.Header>
+      ⠀Congratulations on winning Minesweeper
+      <Modal.Body>Game time: {String(timer).padStart(3, '0')} seconds!</Modal.Body>
+      <Modal.Footer>
+        <Button className='custom-btn' onClick={onClose}>
+          CLOSE
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
   return (
     <div 
       className="app-container" 
@@ -518,6 +548,7 @@ useEffect(() => {
         ))}
       </div>
       </div>
+      <WinModal show={showWinModal} onClose={() => setShowWinModal(false)}  timer={timer}/>
     </div>
   );
 }
