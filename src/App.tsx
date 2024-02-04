@@ -96,8 +96,18 @@ function App() {
 
   const changeLevel = (newLevel: Level) => {
     dispatch(changeLevelAction(newLevel));
+      // localStorage에 난이도 저장
+    localStorage.setItem('minesweeperLevel', newLevel);
   };
 
+  useEffect(() => {
+    // localStorage에서 난이도 불러오기
+    const savedLevel = localStorage.getItem('minesweeperLevel');
+    if (savedLevel) {
+      dispatch(changeLevelAction(savedLevel as Level));
+    }
+  }, [dispatch]);
+  
   useEffect(() => {
     if (gameStarted && !gameOver && checkWin()) {
       dispatch(winGame());
