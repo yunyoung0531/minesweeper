@@ -11,7 +11,7 @@ import { startGame, endGame, winGame, selectGameStarted, selectGameOver, selectG
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, Button } from 'react-bootstrap';
 import styled from 'styled-components';
-
+import Cell from './Cell';
 const VerticalMiddleTd = styled.div`
   display: flex;
   align-items: center;
@@ -460,7 +460,7 @@ useEffect(() => {
                 <li onClick={() => {handleShow();}} style={{borderBottom: '2px solid #7B7B7B', padding: '4px 8px'}} >Custom</li>
                 <Modal show={show} onHide={handleClose} className='custom-modal'>
                   <Modal.Header closeButton onClick={()=>{setShowMenu(false)}}>
-                    <Modal.Title><h4>Custom Game Setup</h4></Modal.Title>
+                    <Modal.Title><h4 style={{fontWeight: '600'}}>Custom Game Setup</h4></Modal.Title>
                   </Modal.Header>
                   <Modal.Body>
                     <div style={{marginLeft: '30px', marginTop: '-20px', marginBottom: '-20px'}}>
@@ -522,32 +522,21 @@ useEffect(() => {
         {board.map((row, rowIndex) => (
           <div key={rowIndex} className="board-row">
             {row.map((cell, cellIndex) => {
-              // 숫자에 따라 클래스 이름을 결정합니다.
-              const cellClass = typeof cell === 'number' && cell > 0 ? `cell-${cell}` : '';
+              const isOpened = openedCells[rowIndex][cellIndex];
+              const isFlagged = flaggedCells[rowIndex][cellIndex];
               const isDeathMine = deathMine && deathMine[0] === rowIndex && deathMine[1] === cellIndex;
+              
               return (
-                <div
+                <Cell
                   key={cellIndex}
-                  className={`cell ${openedCells[rowIndex][cellIndex] ? 'opened' : ''} ${flaggedCells[rowIndex][cellIndex] ? 'flagged' : ''} ${cellClass}`}
+                  cellValue={cell}
+                  isOpened={isOpened}
+                  isFlagged={isFlagged}
+                  isDeathMine={isDeathMine}
                   onClick={() => openCell(rowIndex, cellIndex)}
                   onContextMenu={(event) => { event.preventDefault(); toggleFlag(rowIndex, cellIndex); }}
                   onMouseEnter={() => handleCellMouseEnter(rowIndex, cellIndex)}
-                  tabIndex={0}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {/* 깃발 표시 로직 */}
-                  {isDeathMine
-                    ? <img src="https://freeminesweeper.org/images/bombdeath.gif" alt="Death Mine" />
-                    : flaggedCells[rowIndex][cellIndex] && !openedCells[rowIndex][cellIndex]
-                    ? <img src={flagImage} alt="Flag" style={{ width: '20px', height: '20px' }} />
-                    : openedCells[rowIndex][cellIndex]
-                      ? (cell === 'mine'
-                        ? <img src={mineImage} alt="Mine" />
-                        : typeof cell === 'number' && cell > 0
-                          ? cell
-                          : '')
-                      : <img src={blankCellImage} alt="Blank" />}
-                </div>
+                />
               );
             })}
           </div>
