@@ -51,11 +51,6 @@ function App() {
   const gameOver = useSelector(selectGameOver);
   const gameWon = useSelector(selectGameWon);
 
-  const defaultMineCount = 10;
-  const mineImage = 'https://freeminesweeper.org/images/bombrevealed.gif';
-  const blankCellImage = 'https://freeminesweeper.org/images/blank.gif';
-  const flagImage = 'https://freeminesweeper.org/images/bombflagged.gif';
-  // const [board, setBoard] = useState<Board>(initializeBoard());
   const [openedCells, setOpenedCells] = useState<OpenedCells>([]); // 초기 상태를 빈 배열로 설정
   // 0 값을 갖는 셀의 위치를 저장하는 상태를 추가
   const [zeroCells, setZeroCells] = useState<ZeroCells>([]);
@@ -148,11 +143,6 @@ function App() {
   }, [openedCells, gameStarted, gameOver])
 
   
-  // function initializeOpenedCells(width: number, height: number): OpenedCells {
-  //   return Array.from({ length: height }, () =>
-  //     Array.from({ length: width }, () => false)
-  //   );
-  // }
   function placeMines(board: Board, firstClickRow: number, firstClickCol: number, width: number, height: number): Board {
     let placedMines = 0;
     while (placedMines < mineCount) {
@@ -170,10 +160,6 @@ function App() {
     return board;
   }
 
-  //첫번째 클릭한 셀 주변인지 확인
-  // function isFirstClickAdjacent(row: number, col: number, firstClickRow: number, firstClickCol: number): boolean {
-  //   return Math.abs(row - firstClickRow) <= 1 && Math.abs(col - firstClickCol) <= 1;
-  // }
 
   //문제가 있던 함수 !!
   function calculateMines(board: Board): Board {
@@ -461,7 +447,6 @@ useEffect(() => {
       <header className="game-header">
       {showMenu && (
           <div className="game-menu active">
-            {/* // <div className={`game-menu ${showMenu ? 'active' : ''}`}> */}
               <ul className="game-menu-ul">
                 <li onClick={() => {resetGame(); setShowMenu(false);}} style={{borderBottom: '2px solid #7B7B7B' , padding: '4px 8px'}}>New (F2)</li>
                 <li onClick={() => {changeLevel('beginner'); setShowMenu(false);}} style={{ padding: '4px 8px' }}>Beginner</li>
@@ -516,14 +501,12 @@ useEffect(() => {
         <div className="mine-count">
           {String(remainingMines).padStart(3, '0')}
         </div>
-        {/* <button className="reset-button"> */}
         <img 
           className="reset-button" 
           src={resetButtonImage} 
           alt="Reset Game"
           onClick={resetGame}
         />
-        {/* </button> */}
         <div className="timer">
           {String(timer).padStart(3, '0')}
         </div>
