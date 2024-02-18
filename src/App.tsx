@@ -129,7 +129,7 @@ function App() {
         }, 1000);
     }
     return () => {
-        if (intervalId) clearInterval(intervalId);
+        if (intervalId) clearInterval(intervalId); //언마운트 또는 값 변경될 때 중지됨
     };
 }, [gameStarted, gameOver, gameWon, dispatch]);
 
@@ -165,12 +165,16 @@ function App() {
   function calculateMines(board: Board): Board {
     let tempZeroCells: ZeroCells = []; // 0 값을 갖는 셀의 위치를 임시 저장할 배열
 
+    // 현재 셀을 중심으로 주변 8개 셀의 상대적 위치. 
+    // [-1, -1]은 현재 셀의 왼쪽 위 대각선에 있는 셀을 가리키고
+    // [1, 1]은 오른쪽 아래 대각선에 있는 셀을 가리킴
     const directions = [
       [-1, -1], [-1, 0], [-1, 1],
       [0, -1],           [0, 1],
       [1, -1], [1, 0], [1, 1]
     ];
 
+    //순회
     for (let row = 0; row < height; row++) {
       for (let col = 0; col < width; col++) {
         if (board[row][col] === 'mine') continue;
@@ -178,10 +182,12 @@ function App() {
         let mineCount = 0;
         for (let [dx, dy] of directions) {
           const newRow = row + dx, newCol = col + dy;
+          // 만약 새로운 위치가 보드의 유효한 범위 내에 있고, 그 위치에 지뢰가 있다면
           if (newRow >= 0 && newRow < height && newCol >= 0 && newCol < width  && board[newRow][newCol] === 'mine') {
             mineCount++;
           }
         }
+        // 해당 셀을 클릭했을 때  주변에 몇 개의 지뢰가 있는지 보여줌
         board[row][col] = mineCount;
 
         // 셀의 값이 0이면 해당 위치를 tempZeroCells에 추가
@@ -208,16 +214,56 @@ function App() {
     for (let row = 0; row < (height); row++) {
       for (let col = 0; col < width ; col++) {
         if (board[row][col] !== 'mine' && !openedCells[row][col]) {
-          return false;
+          return false; // 닫힌 비지뢰 칸이 있다면 게임 승리 아님
         }
       }
     }
-    return true;
+    return true; //모든 비지뢰 칸이 열렸다면 게임 승리
   }
 
   const [deathMine, setDeathMine] = useState<[number, number] | null>(null);
 
+  // "click한 cell 주위 모든 cell을 열어볼 수 있도록 한다."
   function openCell(row: number, col: number) {
+    const newOpenedCells = openedCells.map(row => [...row]);
+
+    // 탐색을 시작할 위치(사용자가 클릭한 셀)를 큐에 추가 
+    const queue = [[row, col]];
+  
+    //큐에 아직 처리할 셀이 남아있는 동안 탐색 함
+    while (queue.length > 0) {
+      // 큐에서 다음 셀을 꺼냄 이 셀이 현재 처리할 셀
+      const current = queue.shift();
+      if (!current) continue;
+
+      const [currentRow, currentCol] = current;
+  
+      if (!newOpenedCells[currentRow][currentCol]) {
+        newOpenedCells[currentRow][currentCol] = true; //탐색
+  
+        if (board[currentRow][currentCol] === 0) {
+          const directions = [
+            [-1, -1], [-1, 0], [-1, 1],
+            [0, -1],           [0, 1],
+            [1, -1], [1, 0], [1, 1]
+          ];
+  
+          directions.forEach(([dx, dy]) => {
+            const newRow = currentRow + dx;
+            const newCol = currentCol + dy;
+            if (
+              newRow >= 0 && newRow < height && 
+              newCol >= 0 && newCol < width &&
+              !newOpenedCells[newRow][newCol] 
+            ) {
+              // 유효한 범위 내에 있고 아직 열리지 않은 셀을 큐에 추가
+              queue.push([newRow, newCol]);
+            }
+          });
+        }
+      }
+    }
+
     if (!gameStarted) {
       dispatch(startGame());
       // 여기서 첫 클릭된 셀을 기준으로 지뢰를 배치합니다.
@@ -244,39 +290,6 @@ function App() {
           return;
         }
   
-    const newOpenedCells = openedCells.map(row => [...row]);
-    const queue = [[row, col]];
-  
-    while (queue.length > 0) {
-      const current = queue.shift();
-      if (!current) continue;
-
-      const [currentRow, currentCol] = current;
-  
-      if (!newOpenedCells[currentRow][currentCol]) {
-        newOpenedCells[currentRow][currentCol] = true;
-  
-        if (board[currentRow][currentCol] === 0) {
-          const directions = [
-            [-1, -1], [-1, 0], [-1, 1],
-            [0, -1],           [0, 1],
-            [1, -1], [1, 0], [1, 1]
-          ];
-  
-          directions.forEach(([dx, dy]) => {
-            const newRow = currentRow + dx;
-            const newCol = currentCol + dy;
-            if (
-              newRow >= 0 && newRow < height && 
-              newCol >= 0 && newCol < width &&
-              !newOpenedCells[newRow][newCol] 
-            ) {
-              queue.push([newRow, newCol]);
-            }
-          });
-        }
-      }
-    }
     // 깃발이 꽂힌 셀이면 아무 것도 하지 않음
     if (flaggedCells[row][col]) return;
   
