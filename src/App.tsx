@@ -31,14 +31,14 @@ type LevelConfig = {
   width: number;
   height: number;
   mines: number;
-};
+}; 
 
-// 각 레벨에 따른 게임 보드 크기와 지뢰 수 설정
-const levels: Record<Level, LevelConfig> = {
-  beginner: { width: 8, height: 8, mines: 10 },
-  intermediate: { width: 16, height: 16, mines: 40 },
-  expert: { width: 32, height: 16, mines: 100 }, // 예를 들어 expert는 직사각형 게임 보드
-};
+// 각 레벨에 따른 게임 보드 크기와 지뢰 수 설정 -> gameSlice.ts 로 옮김
+// const levels: Record<Level, LevelConfig> = {
+//   beginner: { width: 8, height: 8, mines: 10 },
+//   intermediate: { width: 16, height: 16, mines: 40 },
+//   expert: { width: 32, height: 16, mines: 100 }, // 예를 들어 expert는 직사각형 게임 보드
+// };
 interface WinModalProps {
   show: boolean;
   onClose: () => void;
@@ -125,9 +125,11 @@ function App() {
     let intervalId: number | undefined; // 타입을 number | undefined로 지정
     if (gameStarted && !gameOver && !gameWon) {
         intervalId = window.setInterval(() => { // window.setInterval을 사용하여 브라우저의 타이머 ID를 명시적으로 지정
-        dispatch(updateTimer());
+          dispatch(updateTimer());
         }, 1000);
     }
+    //setTimeout과는 다르게 함수를 한번만 실행하는 것이 아니라 부여된 시간 간격 이후로 주기적으로 실행합니다. 
+    //만약 계속 호출하는 것을 멈추고 싶다면, clearInterval(timerId)를 호출해야 합니다.
     return () => {
         if (intervalId) clearInterval(intervalId); //언마운트 또는 값 변경될 때 중지됨
     };
@@ -142,7 +144,7 @@ function App() {
       }
   }, [openedCells, gameStarted, gameOver])
 
-  
+  //지뢰 배치 함수
   function placeMines(board: Board, firstClickRow: number, firstClickCol: number, width: number, height: number): Board {
     let placedMines = 0;
     while (placedMines < mineCount) {
@@ -162,6 +164,8 @@ function App() {
 
 
   //문제가 있던 함수 !!
+  //3. "(0,0) 부터 현재 cell을 감싼 모든 cell의 값을 확인하고 1 (지뢰)의 수를 세어 값을 넣는다."
+  //6. "값이 0인 cell의 위치만 저장하는 배열을 만들어 push 한다."
   function calculateMines(board: Board): Board {
     let tempZeroCells: ZeroCells = []; // 0 값을 갖는 셀의 위치를 임시 저장할 배열
 
@@ -181,7 +185,7 @@ function App() {
 
         let mineCount = 0;
         for (let [dx, dy] of directions) {
-          const newRow = row + dx, newCol = col + dy;
+          const newRow = row + dx, newCol = col + dy; //각 방향에 대해 새로운 행이랑 열 위치 계산
           // 만약 새로운 위치가 보드의 유효한 범위 내에 있고, 그 위치에 지뢰가 있다면
           if (newRow >= 0 && newRow < height && newCol >= 0 && newCol < width  && board[newRow][newCol] === 'mine') {
             mineCount++;
@@ -200,6 +204,7 @@ function App() {
     return board;
   }
 
+  //게임이 끝났을 때 (졌을 때)
   function revealMines() {
     // 모든 지뢰의 위치를 보여주는 함수
     // 지뢰가 있는 모든 셀을 열린 상태로 설정
@@ -223,9 +228,11 @@ function App() {
 
   const [deathMine, setDeathMine] = useState<[number, number] | null>(null);
 
-  // "click한 cell 주위 모든 cell을 열어볼 수 있도록 한다."
+  // 4. "click한 cell 주위 모든 cell을 열어볼 수 있도록 한다."
+  // 5. "click 한 주위 cell 중 값이 0인 cell만 열리도록 한다" - BFS 알고리즘 *기억*
+  // 7. "click한 cell 주변에 0이 있다면,또  값이 0인 cell 주변에 또 0이 있는지 찾아 배열에 push한다."
   function openCell(row: number, col: number) {
-    const newOpenedCells = openedCells.map(row => [...row]);
+    const newOpenedCells = openedCells.map(row => [...row]); //현재 열려 있는 셀들의 상태를 복사
 
     // 탐색을 시작할 위치(사용자가 클릭한 셀)를 큐에 추가 
     const queue = [[row, col]];
@@ -238,10 +245,10 @@ function App() {
 
       const [currentRow, currentCol] = current;
   
-      if (!newOpenedCells[currentRow][currentCol]) {
-        newOpenedCells[currentRow][currentCol] = true; //탐색
+      if (!newOpenedCells[currentRow][currentCol]) { //현재 셀이 아직 열리지 않았다면
+        newOpenedCells[currentRow][currentCol] = true; //셀을 열고 주변 셀 탐색
   
-        if (board[currentRow][currentCol] === 0) {
+        if (board[currentRow][currentCol] === 0) { //현재 셀이 '0' (즉, 주변에 지뢰가 없으면) 주변 셀 탐색
           const directions = [
             [-1, -1], [-1, 0], [-1, 1],
             [0, -1],           [0, 1],
@@ -257,7 +264,12 @@ function App() {
               !newOpenedCells[newRow][newCol] 
             ) {
               // 유효한 범위 내에 있고 아직 열리지 않은 셀을 큐에 추가
-              queue.push([newRow, newCol]);
+              //queue.push([newRow, newCol]);
+              newOpenedCells[newRow][newCol] = true; // 셀을 열고
+              if (board[newRow][newCol] === 0) {
+                queue.push([newRow, newCol]); // 주변에 지뢰가 없는 셀만 큐에 추가
+              }
+          
             }
           });
         }
@@ -278,17 +290,17 @@ function App() {
     }
   // 만약 지뢰를 클릭했다면, 해당 지뢰의 위치를 저장하고 모든 지뢰를 보여주며 게임을 종료함
     if (board[row][col] === 'mine') {
-      setDeathMine([row, col]); // 이 지뢰가 패배의 원인이 되었습니다.
+      setDeathMine([row, col]); // 이 지뢰가 패배의 원인이 되었다는 것을 알림
       revealMines();
       return;
     }
     if (openedCells[row][col] || flaggedCells[row][col] || gameOver) return;
 
-        // 만약 지뢰를 클릭했다면, 모든 지뢰를 보여주고 게임을 종료합니다.
-        if (board[row][col] === 'mine') {
-          revealMines();
-          return;
-        }
+    // 만약 지뢰를 클릭했다면, 모든 지뢰를 보여주고 게임을 종료합니다.
+    if (board[row][col] === 'mine') {
+      revealMines();
+      return;
+    }
   
     // 깃발이 꽂힌 셀이면 아무 것도 하지 않음
     if (flaggedCells[row][col]) return;
@@ -306,6 +318,7 @@ function App() {
     setSelectedCell([row, col]); // 마우스가 셀 위에 있을 때 셀의 위치를 설정
   }
 
+  //깃발 꽂기 - 스페이스바
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (selectedCell && (event.key === ' ' || event.key === 'Spacebar')) {
       event.preventDefault();
@@ -320,10 +333,15 @@ function App() {
     }
   }
 
+  //깃발 꽂기
   function toggleFlag(row: number, col: number) {
-    const newFlaggedCells = flaggedCells.map((rowArray, rowIndex) => 
+    const newFlaggedCells = flaggedCells.map((rowArray, rowIndex) =>  //순회
       rowArray.map((cell, colIndex) => 
         rowIndex === row && colIndex === col ? !cell : cell
+        // 현재 순회 중인 셀의 위치가 사용자가 클릭한 셀의 위치(row, col)와 일치하는지 확인
+        // 일치한다면, 현재 셀의 깃발 상태를 반전(!cell)시킵니다.
+        // 즉, 깃발이 없었다면 깃발을 추가하고, 이미 깃발이 있었다면 깃발을 제거합니다. 
+        //일치하지 않는 셀에 대해서는 기존의 상태(cell)를 유지합니다.
       )
     );
     setFlaggedCells(newFlaggedCells);
@@ -364,6 +382,7 @@ const [customWidth, setCustomWidth] = useState(0);
 const [customHeight, setCustomHeight] = useState(0);
 const [customMines, setCustomMines] = useState(0);
 
+// 모달창 custom 관련
 const handleSubmit = () => {
   const maxWidth = 100;
   const maxHeight = 100;
@@ -391,9 +410,14 @@ const handleSubmit = () => {
   }
 };
 
+// React 컴포넌트의 라이프사이클 동안 특정 돔 요소(elementRef.current)의 위치를 조정하고, 윈도우 크기가 변경될 때마다 이 위치를 업데이트하는 데 사용됩니다. 여기서 useEffect는 컴포넌트가 마운트되었을 때와 언마운트될 때 실행되도록 설정되어 있습니다.
 const elementRef = useRef<HTMLDivElement>(null); // HTMLDivElement 타입을 useRef에 명시적으로 전달
+//useRef는 DOM 요소에 직접적인 참조를 생성하는 데 사용
+//여기서는 HTMLDivElement 타입의 참조를 생성하여, 특정 <div> 요소를 직접 조작할 수 있게 합니다.
 
 useEffect(() => {
+  // adjustMenuPosition 함수는 elementRef.current가 참조하는 DOM 요소의 위치 정보를 이용하여 게임 메뉴의 스타일을 직접 조정합니다.
+
   const adjustMenuPosition = () => {
     // elementRef.current는 게임 보드를 가리키는 DOM 요소입니다.
     if (elementRef.current) {
@@ -421,22 +445,7 @@ useEffect(() => {
   };
 }, []); // 빈 의존성 배열은 컴포넌트가 마운트되고 언마운트될 때만 useEffect를 실행하게 합니다.
 
-function WinModal({ show, onClose, timer }: WinModalProps) {
-  return (
-    <Modal show={show} onHide={onClose} className="custom-modal">
-      <Modal.Header>
-        <Modal.Title><h4 style={{ fontWeight: '600'}}>Congratulations!</h4></Modal.Title>
-      </Modal.Header>
-      ⠀Congratulations on winning Minesweeper
-      <Modal.Body>Game time: {String(timer).padStart(3, '0')} seconds!</Modal.Body>
-      <Modal.Footer>
-        <Button className='custom-btn' onClick={onClose}>
-          CLOSE
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
-}
+
 useEffect(() => {
   if (timer >= 999) {
     dispatch(endGame()); 
@@ -530,7 +539,8 @@ useEffect(() => {
             {row.map((cell, cellIndex) => {
               const isOpened = openedCells[rowIndex][cellIndex];
               const isFlagged = flaggedCells[rowIndex][cellIndex];
-              const isDeathMine = deathMine && deathMine[0] === rowIndex && deathMine[1] === cellIndex;
+              //지뢰를 클릭했을 때 해당 지뢰가 게임에서 패배의 원인이 되었는지 여부
+              const isDeathMine = deathMine && (deathMine[0] === rowIndex) && (deathMine[1] === cellIndex);
               
               return (
                 <Cell
@@ -553,5 +563,22 @@ useEffect(() => {
     </div>
   );
 }
+function WinModal({ show, onClose, timer }: WinModalProps) {
+  return (
+    <Modal show={show} onHide={onClose} className="custom-modal">
+      <Modal.Header>
+        <Modal.Title><h4 style={{ fontWeight: '600'}}>Congratulations!</h4></Modal.Title>
+      </Modal.Header>
+      ⠀Congratulations on winning Minesweeper
+      <Modal.Body>Game time: {String(timer).padStart(3, '0')} seconds!</Modal.Body>
+      <Modal.Footer>
+        <Button className='custom-btn' onClick={onClose}>
+          CLOSE
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
 
 export default App;
+
