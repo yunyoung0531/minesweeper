@@ -232,81 +232,68 @@ function App() {
   // 5. "click 한 주위 cell 중 값이 0인 cell만 열리도록 한다" - BFS 알고리즘 *기억*
   // 7. "click한 cell 주변에 0이 있다면,또  값이 0인 cell 주변에 또 0이 있는지 찾아 배열에 push한다."
   function openCell(row: number, col: number) {
-    const newOpenedCells = openedCells.map(row => [...row]); //현재 열려 있는 셀들의 상태를 복사
-
-    // 탐색을 시작할 위치(사용자가 클릭한 셀)를 큐에 추가 
-    const queue = [[row, col]];
+    const directions = [
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 1],
+        [1, -1], [1, 0], [1, 1]
+    ];
   
-    //큐에 아직 처리할 셀이 남아있는 동안 탐색 함
+    let isNewGame = false;
+    
+    if (!gameStarted) {
+      isNewGame = true;
+      dispatch(startGame());
+      const newBoardWithMines = placeMines(board, row, col, width, height);
+      const calculatedBoard = calculateMines(newBoardWithMines);
+      setBoard(calculatedBoard);
+    }
+    
+    if (openedCells[row][col] || flaggedCells[row][col] || gameOver) {
+      return;
+    }
+    
+    const newOpenedCells = openedCells.map(rowArray => [...rowArray]);
+    const queue: [number, number][] = isNewGame ? [[row, col]] : [];
+    
+    if (!isNewGame) {
+      queue.push([row, col]);
+    }
+    
     while (queue.length > 0) {
-      // 큐에서 다음 셀을 꺼냄 이 셀이 현재 처리할 셀
-      const current = queue.shift();
-      if (!current) continue;
-
-      const [currentRow, currentCol] = current;
-  
-      if (!newOpenedCells[currentRow][currentCol]) { //현재 셀이 아직 열리지 않았다면
-        newOpenedCells[currentRow][currentCol] = true; //셀을 열고 주변 셀 탐색
-  
-        if (board[currentRow][currentCol] === 0) { //현재 셀이 '0' (즉, 주변에 지뢰가 없으면) 주변 셀 탐색
-          const directions = [
-            [-1, -1], [-1, 0], [-1, 1],
-            [0, -1],           [0, 1],
-            [1, -1], [1, 0], [1, 1]
-          ];
-  
-          directions.forEach(([dx, dy]) => {
-            const newRow = currentRow + dx;
-            const newCol = currentCol + dy;
-            if (
-              newRow >= 0 && newRow < height && 
-              newCol >= 0 && newCol < width &&
-              !newOpenedCells[newRow][newCol] 
-            ) {
-              // 유효한 범위 내에 있고 아직 열리지 않은 셀을 큐에 추가
-              //queue.push([newRow, newCol]);
-              newOpenedCells[newRow][newCol] = true; // 셀을 열고
-              if (board[newRow][newCol] === 0) {
-                queue.push([newRow, newCol]); // 주변에 지뢰가 없는 셀만 큐에 추가
-              }
-          
-            }
-          });
+      const [currentRow, currentCol] = queue.shift()!;
+    
+      if (currentRow < 0 || currentCol < 0 || currentRow >= height || currentCol >= width || newOpenedCells[currentRow][currentCol]) {
+        continue;
+      }
+    
+      newOpenedCells[currentRow][currentCol] = true; // 현재 셀을 열고
+    
+      if (board[currentRow][currentCol] === 'mine') {
+        setDeathMine([currentRow, currentCol]);
+        revealMines();
+        dispatch(endGame());
+        return;
+      }
+    
+      if (board[currentRow][currentCol] === 0) {
+        for (const [dx, dy] of directions) {
+          const newRow = currentRow + dx;
+          const newCol = currentCol + dy;
+          if (newRow >= 0 && newRow < height && newCol >= 0 && newCol < width && !newOpenedCells[newRow][newCol]) {
+            queue.push([newRow, newCol]);
+          }
         }
       }
     }
-
-    if (!gameStarted) {
-      dispatch(startGame());
-      // 여기서 첫 클릭된 셀을 기준으로 지뢰를 배치합니다.
-      const newBoardWithMines = placeMines(board, row, col, width, height); // 첫 클릭 위치를 인자로 지뢰 배치
-      const calculatedBoard = calculateMines(newBoardWithMines);
-      setBoard(calculatedBoard);
-      // 첫 번째 셀을 열기 전에 지뢰가 배치되도록 로직을 조정
-    }
-    if (checkWin()) {
-      dispatch(endGame());
-      dispatch(resetGameStarted()); // 게임 승리 시 게임 시작 상태를 false로 설정
-    }
-  // 만약 지뢰를 클릭했다면, 해당 지뢰의 위치를 저장하고 모든 지뢰를 보여주며 게임을 종료함
-    if (board[row][col] === 'mine') {
-      setDeathMine([row, col]); // 이 지뢰가 패배의 원인이 되었다는 것을 알림
-      revealMines();
-      return;
-    }
-    if (openedCells[row][col] || flaggedCells[row][col] || gameOver) return;
-
-    // 만약 지뢰를 클릭했다면, 모든 지뢰를 보여주고 게임을 종료합니다.
-    if (board[row][col] === 'mine') {
-      revealMines();
-      return;
-    }
-  
-    // 깃발이 꽂힌 셀이면 아무 것도 하지 않음
-    if (flaggedCells[row][col]) return;
-  
+    
     setOpenedCells(newOpenedCells);
+    
+    if (checkWin()) {
+      dispatch(winGame());
+      dispatch(endGame());
+    }
   }
+  
 
   function initializeFlaggedCells(width: number, height: number): FlaggedCells {
     return Array.from({ length: height }, () =>
